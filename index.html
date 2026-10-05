@@ -2,67 +2,106 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BAMC NWP Image Studio Pro</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NWP 六要素预报</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#07111e;color:#eaf4ff;font:14px system-ui,"Microsoft YaHei",sans-serif}
-header{padding:16px 24px;border-bottom:1px solid #23405a;background:#091522}
-.logo{font-size:21px;font-weight:800}
-.logo b{color:#45a8ff}
+body{margin:0;background:#ffffff;color:#1e293b;font:14px system-ui,"Microsoft YaHei",sans-serif;-webkit-text-size-adjust:100%}
+header{padding:16px 24px;border-bottom:1px solid #e2e8f0;background:#ffffff}
+.logo{font-size:21px;font-weight:800;color:#0f172a}
+.logo b{color:#2563eb}
 main{max-width:1600px;margin:auto;padding:22px}
 .work{display:grid;grid-template-columns:300px 1fr;gap:18px}
-.panel{background:#0d1b2b;border:1px solid #24405b;border-radius:16px;padding:16px}
+.panel{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:16px}
 .control{height:max-content;position:sticky;top:10px;max-height:90vh;overflow-y:auto}
-.group{border-bottom:1px solid #21364b;padding-bottom:14px;margin-bottom:14px}
+.group{border-bottom:1px solid #e2e8f0;padding-bottom:14px;margin-bottom:14px}
 .group:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
 h1{margin:0}
-.muted{color:#8ea5bb;font-size:12px}
-label{display:block;color:#a7b8c8;font-size:12px;margin:6px 0}
-input,select,button{width:100%;background:#081521;color:#eaf4ff;border:1px solid #2a4965;border-radius:8px;padding:9px;margin:4px 0;font:inherit}
-button{cursor:pointer}
-.active,.primary{background:#1264a3;border-color:#4aa8ee}
+.muted{color:#64748b;font-size:12px}
+label{display:block;color:#475569;font-size:12px;margin:6px 0}
+input,select,button{width:100%;background:#ffffff;color:#1e293b;border:1px solid #cbd5e1;border-radius:8px;padding:9px;margin:4px 0;font:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:hover{border-color:#2563eb}
+.active,.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+.active:hover,.primary:hover{background:#1d4ed8}
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.checks label{border:1px solid #263f57;border-radius:7px;padding:6px;display:flex;align-items:center;gap:6px}
-.checks input{width:auto;margin:0}
-.preview{overflow:auto}
-.canvaswrap{background:#030910;padding:15px;overflow:auto;display:flex;justify-content:center}
-#out{background:#0b1520;color:#e8f1f8;position:relative;overflow:hidden}
-.out-head{height:72px;padding:14px 28px;background:linear-gradient(135deg,#0a1f35,#0e4a7a);color:#fff;display:flex;justify-content:space-between;align-items:center}
-.out-title{font-size:22px;font-weight:800;letter-spacing:.5px}
-.out-sub{font-size:12px;opacity:.85;margin-top:2px}
-.out-meta{text-align:right;font-size:12px;line-height:1.55}
-.out-body{padding:12px 20px 16px;display:flex;flex-direction:column;gap:10px}
+.checks label{border:1px solid #cbd5e1;border-radius:7px;padding:6px;display:flex;align-items:center;gap:6px;background:#ffffff;margin:0}
+.checks input{width:auto;margin:0;accent-color:#2563eb}
+.checks-3{grid-template-columns:repeat(3,1fr)}
+.preview{overflow:auto;background:#f8fafc}
+.canvaswrap{background:#eef2f7;padding:15px;overflow-x:auto;display:flex;justify-content:center;border-radius:10px}
+
+/* ── 预报图（背景图 + 遮罩 + 内容） ── */
+#out{position:relative;overflow:hidden;background:#0b1520;color:#e8f1f8}
+#bgImage{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
+#bgOverlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,rgba(8,16,26,0.55) 0%,rgba(8,16,26,0.72) 45%,rgba(8,16,26,0.82) 100%);z-index:1;pointer-events:none}
+
+.out-head{height:72px;padding:14px 28px;background:linear-gradient(135deg,rgba(10,31,53,0.55),rgba(14,74,122,0.55));color:#fff;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2;backdrop-filter:blur(2px)}
+.out-title{font-size:22px;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.out-sub{font-size:12px;opacity:.9;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.out-meta{text-align:right;font-size:12px;line-height:1.55;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.out-body{padding:12px 20px 16px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:2}
 .layer-bar{display:flex;flex-wrap:wrap;gap:6px}
-.layer-chip{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid transparent}
-.card{background:#111d2b;border:1px solid #1e3348;border-radius:10px;overflow:hidden}
-.card h3{margin:0;padding:8px 12px;background:#152536;border-bottom:1px solid #1e3348;font-size:13px;font-weight:700;color:#9ec4e8}
+.card{background:rgba(11,20,32,0.62);border:1px solid rgba(60,90,120,0.5);border-radius:10px;overflow:hidden;backdrop-filter:blur(3px)}
 .chart-wrap{position:relative;padding:8px}
-#plot{display:block;width:100%;background:#0a121c}
-.foot{font-size:10px;color:#5a7288;margin-top:6px;display:flex;justify-content:space-between;padding:0 4px}
-.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:4px 0;font-size:10px;color:#8aa0b5}
+#plot{display:block;width:100%;background:rgba(8,16,26,0.55);border-radius:6px}
+.foot{font-size:10px;color:#c5d4e2;margin-top:6px;display:flex;justify-content:space-between;padding:0 4px;position:relative;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:4px 0;font-size:10px;color:#d5e2ef;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .leg-item{display:flex;align-items:center;gap:4px}
 .leg-swatch{width:14px;height:8px;border-radius:2px}
 
+/* ── 详细查询区 ── */
 .detail{display:grid;grid-template-columns:1.65fr .8fr;gap:18px;margin-top:18px}
-.detail h2,.panel>h2{margin:0 0 14px;font-size:16px;color:#9ec4e8}
-.chartbox{position:relative;height:390px}
+.detail h2,.panel>h2{margin:0 0 14px;font-size:16px;color:#0f172a}
+.chartbox{position:relative;height:390px;background:#ffffff;border-radius:10px;padding:8px}
 .mcards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.mcard{background:#0a1625;border:1px solid #20354d;padding:13px;border-radius:12px}
-.mcard b{display:block;font-size:21px;margin-top:4px;color:#eaf4ff}
-.dtbl{width:100%;border-collapse:collapse;font-size:13px}
-.dtbl th,.dtbl td{padding:10px 8px;border-bottom:1px solid #20354d;text-align:left}
-.dtbl th{color:#a9bdd2;background:#152536;font-weight:600}
-.dtbl td{color:#c8d9e8}
-@media(max-width:1100px){.detail{grid-template-columns:1fr}.chartbox{height:320px}}
-@media(max-width:900px){.work{grid-template-columns:1fr}.control{position:static;max-height:none}}
+.mcard{background:#ffffff;border:1px solid #e2e8f0;padding:13px;border-radius:12px}
+.mcard b{display:block;font-size:21px;margin-top:4px;color:#0f172a}
+
+@media(max-width:1100px){
+  .detail{grid-template-columns:1fr}
+  .chartbox{height:320px}
+}
+@media(max-width:900px){
+  .work{grid-template-columns:1fr}
+  .control{position:static;max-height:none}
+  .canvaswrap{justify-content:flex-start}
+}
+@media(max-width:640px){
+  main{padding:12px}
+  header{padding:12px 16px}
+  .logo{font-size:17px}
+  .panel{padding:12px;border-radius:12px}
+  .group{padding-bottom:10px;margin-bottom:10px}
+  .canvaswrap{padding:8px;border-radius:8px}
+  .chartbox{height:240px;padding:4px}
+  .detail h2,.panel>h2{font-size:14px;margin-bottom:10px}
+  .mcard{padding:10px}
+  .mcard b{font-size:17px}
+  input,select,button{padding:11px 12px;font-size:15px}
+  .checks label{padding:8px 6px}
+  .checks-3{grid-template-columns:repeat(2,1fr)}
+
+  body:not(.exporting) .out-head{padding:10px 14px;height:auto;flex-direction:column;align-items:flex-start;gap:6px}
+  body:not(.exporting) .out-title{font-size:15px}
+  body:not(.exporting) .out-sub{font-size:11px}
+  body:not(.exporting) .out-meta{text-align:left;font-size:11px;line-height:1.4}
+  body:not(.exporting) .out-body{padding:10px 12px 12px;gap:8px}
+  body:not(.exporting) .foot{flex-direction:column;gap:2px;font-size:9px}
+  body:not(.exporting) .legend{font-size:9px;gap:8px;padding:4px 8px 8px}
+}
+@media(max-width:400px){
+  .mcards{grid-template-columns:1fr}
+  .checks{grid-template-columns:1fr}
+  .checks-3{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">BAMC <b>NWP Image Studio Pro</b></div>
+  <div class="logo">NWP <b>六要素预报</b></div>
 </header>
 <main>
   <div class="work">
@@ -121,12 +160,15 @@ button{cursor:pointer}
       <div id="status" class="muted">加载中…</div>
     </aside>
     <section class="panel preview">
-      <div class="muted">导出预览（仅导出下方深色预报图区域）</div>
+      <div class="muted">导出预览（仅导出下方预报图区域）</div>
       <div class="canvaswrap">
         <div id="out">
+          <img id="bgImage" src="background.jpg" alt="">
+          <div id="bgOverlay"></div>
+
           <div class="out-head">
             <div>
-              <div class="out-title">NWP 数值预报 · 多要素成图</div>
+              <div class="out-title">NWP 六要素预报</div>
               <div id="sub" class="out-sub">GFS Global</div>
             </div>
             <div id="meta" class="out-meta"></div>
@@ -134,7 +176,6 @@ button{cursor:pointer}
           <div class="out-body">
             <div id="chips" class="layer-bar"></div>
             <div class="card">
-              <h3>模式预报时序 · 渐变填色 / 风羽 / 六轴坐标</h3>
               <div class="chart-wrap">
                 <canvas id="plot" width="1600" height="700"></canvas>
               </div>
@@ -142,7 +183,7 @@ button{cursor:pointer}
             </div>
             <div class="foot">
               <span>数据源：Open-Meteo · NOAA GFS / ECMWF IFS</span>
-              <span>BAMC NWP Image Studio Pro · 模式结果仅供参考</span>
+              <span>NWP 六要素预报 · 模式结果仅供参考</span>
             </div>
           </div>
         </div>
@@ -155,7 +196,7 @@ button{cursor:pointer}
       <h2>逐小时模式预报</h2>
       <div class="chartbox"><canvas id="dchart"></canvas></div>
       <div class="muted" style="margin-top:8px">勾选下方要素可切换曲线</div>
-      <div class="checks" style="grid-template-columns:repeat(3,1fr);margin-top:8px">
+      <div class="checks checks-3" style="margin-top:8px">
         <label><input type="checkbox" data-var="temp" checked>气温</label>
         <label><input type="checkbox" data-var="humidity" checked>湿度</label>
         <label><input type="checkbox" data-var="precip" checked>降水</label>
@@ -172,16 +213,6 @@ button{cursor:pointer}
       <div id="cards" class="mcards"></div>
     </div>
   </section>
-
-  <section class="panel" style="margin-top:18px">
-    <h2>逐日预报</h2>
-    <div style="overflow:auto">
-      <table class="dtbl">
-        <thead><tr><th>日期</th><th>天气</th><th>最高</th><th>最低</th><th>降水</th><th>最大风</th><th>最大阵风</th></tr></thead>
-        <tbody id="daily"></tbody>
-      </table>
-    </div>
-  </section>
 </main>
 
 <script>
@@ -191,22 +222,29 @@ const $$ = s => [...document.querySelectorAll(s)];
 let S = { m: "gfs", lat: 39.9042, lon: 116.4074, name: "北京" };
 let D = null;
 let chart = null;
+let exportMode = false;
 
 const M = {
   gfs:  ["GFS Global", "NOAA", "~13 km", "https://api.open-meteo.com/v1/gfs", null],
   ifs:  ["ECMWF IFS", "ECMWF", "~9 km", "https://api.open-meteo.com/v1/forecast", "ecmwf_ifs025"]
 };
 
-const wd = c => ({
-  0:"晴",1:"大部晴朗",2:"局部多云",3:"阴",45:"雾",
-  51:"毛毛雨",61:"小雨",63:"中雨",65:"大雨",
-  71:"小雪",73:"中雪",75:"大雪",
-  80:"阵雨",81:"中阵雨",82:"强阵雨",
-  95:"雷暴",96:"雷暴+冰雹",99:"强雷暴"
-}[c] || "未知");
-
 const ft = s => new Date(s).toLocaleString("zh-CN", {
   month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+});
+
+/* ── 背景图加载 ── */
+const bgImg = $("#bgImage");
+const bgReady = new Promise(resolve => {
+  if (bgImg.complete && bgImg.naturalWidth > 0) return resolve(true);
+  bgImg.addEventListener("load", () => resolve(true), { once: true });
+  bgImg.addEventListener("error", () => {
+    bgImg.style.display = "none";
+    $("#bgOverlay").style.display = "none";
+    $("#out").style.background = "#0b1520";
+    console.warn("未找到 background.jpg，已回退纯色背景");
+    resolve(false);
+  }, { once: true });
 });
 
 function lerpColor(a, b, t) {
@@ -324,15 +362,11 @@ async function load() {
     "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
     "pressure_msl", "cloud_cover", "weather_code"
   ].join(",");
-  const daily = [
-    "weather_code", "temperature_2m_max", "temperature_2m_min",
-    "precipitation_sum", "wind_speed_10m_max", "wind_gusts_10m_max"
-  ].join(",");
 
   const p = new URLSearchParams({
     latitude: S.lat, longitude: S.lon,
     timezone: "auto", forecast_days: days,
-    hourly, daily
+    hourly
   });
   if (m[4]) p.set("models", m[4]);
 
@@ -353,7 +387,8 @@ async function load() {
 function applySize() {
   const [w, h] = $("#size").value.split("x").map(Number);
   const out = $("#out");
-  out.style.width = w + "px";
+  const isPhone = window.innerWidth <= 640;
+  out.style.width = (isPhone && !exportMode) ? "100%" : w + "px";
   out.style.minHeight = "";
   const plot = $("#plot");
   const chartH = Math.round(h * 0.85);
@@ -420,10 +455,9 @@ function render() {
   const plotW = W - pad.l - pad.r;
   const plotH = H - pad.t - pad.b;
 
-  ctx.fillStyle = "#0a121c";
-  ctx.fillRect(0, 0, W, H);
+  ctx.clearRect(0, 0, W, H);
 
-  ctx.strokeStyle = "#1a2a3a";
+  ctx.strokeStyle = "rgba(120,150,180,0.22)";
   ctx.lineWidth = 1;
   for (let k = 0; k <= 5; k++) {
     const y = pad.t + plotH * k / 5;
@@ -579,7 +613,7 @@ function render() {
     }
   }
 
-  ctx.fillStyle = "#6a8298";
+  ctx.fillStyle = "#c5d4e2";
   ctx.font = "30px system-ui";
   ctx.textAlign = "center";
   const tStep = Math.max(1, Math.floor(n / 8));
@@ -589,7 +623,7 @@ function render() {
 
   const vi = Math.min(s - start, n - 1);
   if (vi >= 0) {
-    ctx.strokeStyle = "rgba(255,200,60,0.7)";
+    ctx.strokeStyle = "rgba(255,200,60,0.8)";
     ctx.lineWidth = 1.5;
     ctx.setLineDash([4, 3]);
     ctx.beginPath();
@@ -609,13 +643,13 @@ function render() {
     c:  [0, 100]
   };
   const axisDefs = {
-    t:  { unit: '°C',   color: '#e85a5a' },
-    td: { unit: '°C',   color: '#5ab8e0' },
-    h:  { unit: '%',    color: '#40a080' },
-    w:  { unit: 'km/h', color: '#50b050' },
-    r:  { unit: 'mm',   color: '#4080c0' },
-    p:  { unit: 'hPa',  color: '#c0a040' },
-    c:  { unit: '%',    color: '#8090a8' }
+    t:  { unit: '°C',   color: '#ff8a8a' },
+    td: { unit: '°C',   color: '#7cc8ec' },
+    h:  { unit: '%',    color: '#60c0a0' },
+    w:  { unit: 'km/h', color: '#70c870' },
+    r:  { unit: 'mm',   color: '#60a0e0' },
+    p:  { unit: 'hPa',  color: '#e0c060' },
+    c:  { unit: '%',    color: '#a0b0c8' }
   };
 
   function drawAxis(x, key) {
@@ -656,16 +690,16 @@ function render() {
   rightKeys.forEach(k => { drawAxis(rx, k); rx += slot; });
 
   const leg = [];
-  if (layers.t)  leg.push(["气温", "#e85a5a"]);
-  if (layers.td) leg.push(["露点", "#5ab8e0"]);
-  if (layers.h)  leg.push(["湿度", "#40a080"]);
-  if (layers.w)  leg.push(["风速", "#50b050"]);
-  if (layers.g)  leg.push(["阵风", "#e08040"]);
-  if (layers.r)  leg.push(["降水", "#4080c0"]);
-  if (layers.pp) leg.push(["降水概率", "#60a0e0"]);
-  if (layers.p)  leg.push(["气压", "#c0a040"]);
-  if (layers.c)  leg.push(["云量", "#8090a8"]);
-  if (layers.barb) leg.push(["风羽", "#c0d0e8"]);
+  if (layers.t)  leg.push(["气温", "#ff8a8a"]);
+  if (layers.td) leg.push(["露点", "#7cc8ec"]);
+  if (layers.h)  leg.push(["湿度", "#60c0a0"]);
+  if (layers.w)  leg.push(["风速", "#70c870"]);
+  if (layers.g)  leg.push(["阵风", "#f0a060"]);
+  if (layers.r)  leg.push(["降水", "#60a0e0"]);
+  if (layers.pp) leg.push(["降水概率", "#80b8f0"]);
+  if (layers.p)  leg.push(["气压", "#e0c060"]);
+  if (layers.c)  leg.push(["云量", "#a0b0c8"]);
+  if (layers.barb) leg.push(["风羽", "#e0e8f4"]);
   $("#legend").innerHTML = leg.map(([n, c]) =>
     `<span class="leg-item"><span class="leg-swatch" style="background:${c}"></span>${n}</span>`
   ).join("");
@@ -673,7 +707,7 @@ function render() {
 
 function renderDetail() {
   if (!D) return;
-  const h = D.hourly, d = D.daily;
+  const h = D.hourly;
 
   const cards = [
     ["气温", h.temperature_2m[0].toFixed(1) + " °C"],
@@ -688,18 +722,6 @@ function renderDetail() {
   $("#cards").innerHTML = cards.map(([k, v]) =>
     `<div class="mcard"><span class="muted">${k}</span><b>${v}</b></div>`
   ).join("");
-
-  if (d) {
-    $("#daily").innerHTML = d.time.map((t, i) => `<tr>
-      <td>${t}</td>
-      <td>${wd(d.weather_code[i])}</td>
-      <td>${d.temperature_2m_max[i].toFixed(1)}°C</td>
-      <td>${d.temperature_2m_min[i].toFixed(1)}°C</td>
-      <td>${d.precipitation_sum[i].toFixed(1)} mm</td>
-      <td>${d.wind_speed_10m_max[i].toFixed(1)} km/h</td>
-      <td>${d.wind_gusts_10m_max[i].toFixed(1)} km/h</td>
-    </tr>`).join("");
-  }
 
   drawDetail();
 }
@@ -735,43 +757,56 @@ function drawDetail() {
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { labels: { color: '#cfe0f3', boxWidth: 14, font: { size: 11 } } },
+        legend: { labels: { color: '#334155', boxWidth: 14, font: { size: 11 } } },
         tooltip: { callbacks: { title: i => labels[i[0].dataIndex] } }
       },
       scales: {
         x: {
-          ticks: { color: '#7f94aa', maxTicksLimit: 12, font: { size: 10 } },
-          grid: { color: '#20354d' }
+          ticks: { color: '#64748b', maxTicksLimit: 12, font: { size: 10 } },
+          grid: { color: '#e2e8f0' }
         },
         y: {
-          ticks: { color: '#9fc7eb', font: { size: 10 } },
-          grid: { color: '#20354d' },
-          title: { display: true, text: '温度 / °C', color: '#9fc7eb', font: { size: 11 } }
+          ticks: { color: '#2563eb', font: { size: 10 } },
+          grid: { color: '#e2e8f0' },
+          title: { display: true, text: '温度 / °C', color: '#2563eb', font: { size: 11 } }
         },
         y2: {
           position: 'right',
-          ticks: { color: '#9fd7c8', font: { size: 10 } },
+          ticks: { color: '#0d9488', font: { size: 10 } },
           grid: { drawOnChartArea: false },
-          title: { display: true, text: '其他变量', color: '#9fd7c8', font: { size: 11 } }
+          title: { display: true, text: '其他变量', color: '#0d9488', font: { size: 11 } }
         }
       }
     }
   });
 }
 
-async function exp() {
+/* 统一截图：导出时强制 1920 宽度，完成后恢复预览视图 */
+async function captureImage() {
+  await bgReady;
+  exportMode = true;
+  document.body.classList.add('exporting');
   applySize();
   render();
-  await new Promise(r => setTimeout(r, 80));
-  const c = await html2canvas($("#out"), {
+  await new Promise(r => setTimeout(r, 150));
+  const canvas = await html2canvas($("#out"), {
     scale: 2,
-    backgroundColor: "#0b1520",
+    backgroundColor: null,
     useCORS: true,
     logging: false,
     allowTaint: true
   });
+  exportMode = false;
+  document.body.classList.remove('exporting');
+  applySize();
+  render();
+  return canvas;
+}
+
+async function exp() {
+  const c = await captureImage();
   const a = document.createElement("a");
-  a.download = `BAMC_NWP_${S.name}_${$("#lead").value}h_${$("#size").value}.png`;
+  a.download = `NWP_${S.name}_${$("#lead").value}h_${$("#size").value}.png`;
   a.href = c.toDataURL("image/png", 0.95);
   a.click();
   $("#status").textContent = "PNG 已导出(高清) · " + $("#size").value;
@@ -779,15 +814,7 @@ async function exp() {
 
 async function copy() {
   try {
-    applySize();
-    render();
-    await new Promise(r => setTimeout(r, 80));
-    const c = await html2canvas($("#out"), {
-      scale: 2,
-      backgroundColor: "#0b1520",
-      useCORS: true,
-      allowTaint: true
-    });
+    const c = await captureImage();
     c.toBlob(async b => {
       await navigator.clipboard.write([new ClipboardItem({ "image/png": b })]);
       $("#status").textContent = "已复制高清图片到剪贴板";
@@ -797,6 +824,7 @@ async function copy() {
   }
 }
 
+/* 事件 */
 $$(".model").forEach(b => b.onclick = () => {
   $$(".model").forEach(x => x.classList.remove("active"));
   b.classList.add("active");
@@ -815,6 +843,13 @@ $("#days").onchange = () => load().catch(e => $("#status").textContent = e.messa
 $("#size").onchange = () => { applySize(); render(); };
 $$('input[data-p]').forEach(x => x.onchange = render);
 $$('input[data-var]').forEach(x => x.onchange = drawDetail);
+
+/* 窗口尺寸变化时自适应 */
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { applySize(); render(); }, 120);
+});
 
 load().catch(e => $("#status").textContent = e.message);
 </script>
