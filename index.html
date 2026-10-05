@@ -36,7 +36,6 @@ button:hover{border-color:#2563eb}
 /* ── 预报图（背景图 + 遮罩 + 内容） ── */
 #out{position:relative;overflow:hidden;background:#0b1520;color:#e8f1f8}
 #bgImage{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
-/* 遮罩折中：比原版浅、比上一版深，背景图仍清晰可见 */
 #bgOverlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,rgba(8,16,26,0.35) 0%,rgba(8,16,26,0.50) 45%,rgba(8,16,26,0.62) 100%);z-index:1;pointer-events:none}
 
 .out-head{height:72px;padding:14px 28px;background:linear-gradient(135deg,rgba(10,31,53,0.50),rgba(14,74,122,0.50));color:#fff;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
@@ -45,7 +44,6 @@ button:hover{border-color:#2563eb}
 .out-meta{text-align:right;font-size:12px;line-height:1.55;text-shadow:0 1px 4px rgba(0,0,0,.75)}
 .out-body{padding:12px 20px 16px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:2}
 .layer-bar{display:flex;flex-wrap:wrap;gap:6px}
-/* 卡片折中透明度 */
 .card{background:rgba(11,20,32,0.50);border:1px solid rgba(80,120,160,0.45);border-radius:10px;overflow:hidden}
 .chart-wrap{position:relative;padding:8px}
 #plot{display:block;width:100%;background:rgba(8,16,26,0.42);border-radius:6px}
@@ -481,12 +479,13 @@ function render() {
   const xAt = i => pad.l + (n <= 1 ? 0 : i * plotW / (n - 1));
   const yAt = (v, min, max) => pad.t + (max - v) * plotH / (max - min || 1);
 
+  /* ✅ 修正：降水柱高度直接映射到 plotH，与坐标轴完全一致 */
   if (layers.r) {
-    const maxR = Math.max(...series.pr, 0.5);
+    const maxR = Math.max(...series.pr, 1);
     series.pr.forEach((v, i) => {
       if (v <= 0) return;
       const x = xAt(i);
-      const barH = Math.min(plotH * 0.45, (v / maxR) * plotH * 0.45);
+      const barH = (v / maxR) * plotH;
       const col = colorFor("r", v, 0, maxR);
       ctx.fillStyle = col.replace("rgb", "rgba").replace(")", ",0.55)");
       ctx.fillRect(x - 4, pad.t + plotH - barH, 8, barH);
@@ -690,7 +689,8 @@ function render() {
       ctx.lineTo(x + 3, y);
       ctx.stroke();
 
-      ctx.fillText(val.toFixed(0), x - 8, y + 9);
+      /* ✅ 修正：降水坐标轴刻度保留一位小数，避免小值刻度重复 */
+      ctx.fillText(key === 'r' ? val.toFixed(1) : val.toFixed(0), x - 8, y + 9);
     }
   }
 
