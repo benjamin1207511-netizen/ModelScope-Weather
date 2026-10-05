@@ -147,7 +147,7 @@ button:hover{border-color:#2563eb}
           <label><input type="checkbox" data-p="pp">降水概率</label>
           <label><input type="checkbox" data-p="p">气压</label>
           <label><input type="checkbox" data-p="c">云量</label>
-          <label><input type="checkbox" checked data-p="barb">风羽</label>
+          <label><input type="checkbox" checked data-p="barb">风矢</label>
         </div>
       </div>
       <div class="group">
@@ -753,7 +753,7 @@ function render() {
   if (layers.pp) leg.push(["降水概率", "#a0ccff"]);
   if (layers.p)  leg.push(["气压", "#f0d070"]);
   if (layers.c)  leg.push(["云量", "#b8c8dc"]);
-  if (layers.barb) leg.push(["风羽", "#e8f0ff"]);
+  if (layers.barb) leg.push(["风矢", "#e8f0ff"]);
   $("#legend").innerHTML = leg.map(([n, c]) =>
     `<span class="leg-item"><span class="leg-swatch" style="background:${c}"></span>${n}</span>`
   ).join("");
