@@ -36,19 +36,21 @@ button:hover{border-color:#2563eb}
 /* ── 预报图（背景图 + 遮罩 + 内容） ── */
 #out{position:relative;overflow:hidden;background:#0b1520;color:#e8f1f8}
 #bgImage{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
-#bgOverlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,rgba(8,16,26,0.55) 0%,rgba(8,16,26,0.72) 45%,rgba(8,16,26,0.82) 100%);z-index:1;pointer-events:none}
+/* 遮罩折中：比原版浅、比上一版深，背景图仍清晰可见 */
+#bgOverlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,rgba(8,16,26,0.35) 0%,rgba(8,16,26,0.50) 45%,rgba(8,16,26,0.62) 100%);z-index:1;pointer-events:none}
 
-.out-head{height:72px;padding:14px 28px;background:linear-gradient(135deg,rgba(10,31,53,0.55),rgba(14,74,122,0.55));color:#fff;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2;backdrop-filter:blur(2px)}
-.out-title{font-size:22px;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 6px rgba(0,0,0,.6)}
-.out-sub{font-size:12px;opacity:.9;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.6)}
-.out-meta{text-align:right;font-size:12px;line-height:1.55;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.out-head{height:72px;padding:14px 28px;background:linear-gradient(135deg,rgba(10,31,53,0.50),rgba(14,74,122,0.50));color:#fff;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
+.out-title{font-size:22px;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 6px rgba(0,0,0,.75)}
+.out-sub{font-size:12px;opacity:.95;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.75)}
+.out-meta{text-align:right;font-size:12px;line-height:1.55;text-shadow:0 1px 4px rgba(0,0,0,.75)}
 .out-body{padding:12px 20px 16px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:2}
 .layer-bar{display:flex;flex-wrap:wrap;gap:6px}
-.card{background:rgba(11,20,32,0.62);border:1px solid rgba(60,90,120,0.5);border-radius:10px;overflow:hidden;backdrop-filter:blur(3px)}
+/* 卡片折中透明度 */
+.card{background:rgba(11,20,32,0.50);border:1px solid rgba(80,120,160,0.45);border-radius:10px;overflow:hidden}
 .chart-wrap{position:relative;padding:8px}
-#plot{display:block;width:100%;background:rgba(8,16,26,0.55);border-radius:6px}
-.foot{font-size:10px;color:#c5d4e2;margin-top:6px;display:flex;justify-content:space-between;padding:0 4px;position:relative;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.7)}
-.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:4px 0;font-size:10px;color:#d5e2ef;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#plot{display:block;width:100%;background:rgba(8,16,26,0.42);border-radius:6px}
+.foot{font-size:10px;color:#e0eaf5;margin-top:6px;display:flex;justify-content:space-between;padding:0 4px;position:relative;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:4px 0;font-size:10px;color:#e5eef8;text-shadow:0 1px 3px rgba(0,0,0,.75)}
 .leg-item{display:flex;align-items:center;gap:4px}
 .leg-swatch{width:14px;height:8px;border-radius:2px}
 
@@ -163,7 +165,7 @@ button:hover{border-color:#2563eb}
       <div class="muted">导出预览（仅导出下方预报图区域）</div>
       <div class="canvaswrap">
         <div id="out">
-          <img id="bgImage" src="background.jpg" alt="">
+          <img id="bgImage" src="background.jpg" crossorigin="anonymous" alt="">
           <div id="bgOverlay"></div>
 
           <div class="out-head">
@@ -183,7 +185,7 @@ button:hover{border-color:#2563eb}
             </div>
             <div class="foot">
               <span>数据源：Open-Meteo · NOAA GFS / ECMWF IFS</span>
-              <span>NWP 六要素预报 · 模式结果仅供参考</span>
+              <span>www.bamc.top</span>
             </div>
           </div>
         </div>
@@ -287,8 +289,8 @@ function drawBarb(ctx, x, y, speedKmh, dirDeg, scale = 1) {
   const dx = Math.cos(rad) * len;
   const dy = Math.sin(rad) * len;
   ctx.save();
-  ctx.strokeStyle = "#e8f0ff";
-  ctx.fillStyle = "#e8f0ff";
+  ctx.strokeStyle = "#f2f7ff";
+  ctx.fillStyle = "#f2f7ff";
   ctx.lineWidth = 1.4 * scale * 2;
   ctx.beginPath();
   ctx.moveTo(x, y);
@@ -457,7 +459,7 @@ function render() {
 
   ctx.clearRect(0, 0, W, H);
 
-  ctx.strokeStyle = "rgba(120,150,180,0.22)";
+  ctx.strokeStyle = "rgba(160,190,220,0.28)";
   ctx.lineWidth = 1;
   for (let k = 0; k <= 5; k++) {
     const y = pad.t + plotH * k / 5;
@@ -531,7 +533,7 @@ function render() {
     grd.addColorStop(1, "rgba(232,90,90,0.02)");
     ctx.fillStyle = grd;
     ctx.fill();
-    ctx.strokeStyle = "#e85a5a";
+    ctx.strokeStyle = "#ff9d9d";
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     series.t.forEach((v, i) => {
@@ -544,7 +546,7 @@ function render() {
   if (layers.td) {
     const minT = Math.floor(Math.min(...series.t, ...series.td)) - 2;
     const maxT = Math.ceil(Math.max(...series.t, ...series.td)) + 2;
-    ctx.strokeStyle = "#5ab8e0";
+    ctx.strokeStyle = "#7cd8ff";
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 3]);
     ctx.beginPath();
@@ -558,7 +560,7 @@ function render() {
 
   if (layers.w) {
     const maxW = Math.max(...series.ws, 10);
-    ctx.strokeStyle = "#50b050";
+    ctx.strokeStyle = "#70e070";
     ctx.lineWidth = 2;
     ctx.beginPath();
     series.ws.forEach((v, i) => {
@@ -570,7 +572,7 @@ function render() {
 
   if (layers.g) {
     const maxG = Math.max(...series.wg, ...series.ws, 10);
-    ctx.strokeStyle = "#e08040";
+    ctx.strokeStyle = "#ffb060";
     ctx.lineWidth = 1.5;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
@@ -585,7 +587,7 @@ function render() {
   if (layers.p) {
     const minP = Math.floor(Math.min(...series.ps)) - 2;
     const maxP = Math.ceil(Math.max(...series.ps)) + 2;
-    ctx.strokeStyle = "#c0a040";
+    ctx.strokeStyle = "#f0d070";
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     series.ps.forEach((v, i) => {
@@ -596,7 +598,7 @@ function render() {
   }
 
   if (layers.c) {
-    ctx.strokeStyle = "rgba(128,144,168,0.7)";
+    ctx.strokeStyle = "rgba(180,200,224,0.85)";
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     series.cl.forEach((v, i) => {
@@ -613,7 +615,7 @@ function render() {
     }
   }
 
-  ctx.fillStyle = "#c5d4e2";
+  ctx.fillStyle = "#e0ecf8";
   ctx.font = "30px system-ui";
   ctx.textAlign = "center";
   const tStep = Math.max(1, Math.floor(n / 8));
@@ -623,7 +625,7 @@ function render() {
 
   const vi = Math.min(s - start, n - 1);
   if (vi >= 0) {
-    ctx.strokeStyle = "rgba(255,200,60,0.8)";
+    ctx.strokeStyle = "rgba(255,210,80,0.9)";
     ctx.lineWidth = 1.5;
     ctx.setLineDash([4, 3]);
     ctx.beginPath();
@@ -643,13 +645,13 @@ function render() {
     c:  [0, 100]
   };
   const axisDefs = {
-    t:  { unit: '°C',   color: '#ff8a8a' },
-    td: { unit: '°C',   color: '#7cc8ec' },
-    h:  { unit: '%',    color: '#60c0a0' },
-    w:  { unit: 'km/h', color: '#70c870' },
-    r:  { unit: 'mm',   color: '#60a0e0' },
-    p:  { unit: 'hPa',  color: '#e0c060' },
-    c:  { unit: '%',    color: '#a0b0c8' }
+    t:  { unit: '°C',   color: '#ff9d9d' },
+    td: { unit: '°C',   color: '#7cd8ff' },
+    h:  { unit: '%',    color: '#70e0b8' },
+    w:  { unit: 'km/h', color: '#70e070' },
+    r:  { unit: 'mm',   color: '#80b8ff' },
+    p:  { unit: 'hPa',  color: '#f0d070' },
+    c:  { unit: '%',    color: '#b8c8dc' }
   };
 
   function drawAxis(x, key) {
@@ -690,16 +692,16 @@ function render() {
   rightKeys.forEach(k => { drawAxis(rx, k); rx += slot; });
 
   const leg = [];
-  if (layers.t)  leg.push(["气温", "#ff8a8a"]);
-  if (layers.td) leg.push(["露点", "#7cc8ec"]);
-  if (layers.h)  leg.push(["湿度", "#60c0a0"]);
-  if (layers.w)  leg.push(["风速", "#70c870"]);
-  if (layers.g)  leg.push(["阵风", "#f0a060"]);
-  if (layers.r)  leg.push(["降水", "#60a0e0"]);
-  if (layers.pp) leg.push(["降水概率", "#80b8f0"]);
-  if (layers.p)  leg.push(["气压", "#e0c060"]);
-  if (layers.c)  leg.push(["云量", "#a0b0c8"]);
-  if (layers.barb) leg.push(["风羽", "#e0e8f4"]);
+  if (layers.t)  leg.push(["气温", "#ff9d9d"]);
+  if (layers.td) leg.push(["露点", "#7cd8ff"]);
+  if (layers.h)  leg.push(["湿度", "#70e0b8"]);
+  if (layers.w)  leg.push(["风速", "#70e070"]);
+  if (layers.g)  leg.push(["阵风", "#ffb060"]);
+  if (layers.r)  leg.push(["降水", "#80b8ff"]);
+  if (layers.pp) leg.push(["降水概率", "#a0ccff"]);
+  if (layers.p)  leg.push(["气压", "#f0d070"]);
+  if (layers.c)  leg.push(["云量", "#b8c8dc"]);
+  if (layers.barb) leg.push(["风羽", "#e8f0ff"]);
   $("#legend").innerHTML = leg.map(([n, c]) =>
     `<span class="leg-item"><span class="leg-swatch" style="background:${c}"></span>${n}</span>`
   ).join("");
@@ -781,46 +783,94 @@ function drawDetail() {
   });
 }
 
-/* 统一截图：导出时强制 1920 宽度，完成后恢复预览视图 */
+/* ── 截图：修复导出问题 ── */
 async function captureImage() {
   await bgReady;
+
   exportMode = true;
   document.body.classList.add('exporting');
   applySize();
   render();
-  await new Promise(r => setTimeout(r, 150));
-  const canvas = await html2canvas($("#out"), {
-    scale: 2,
-    backgroundColor: null,
-    useCORS: true,
-    logging: false,
-    allowTaint: true
-  });
+  await new Promise(r => setTimeout(r, 250));
+
+  const target = $("#out");
+  let canvas = null;
+
+  try {
+    canvas = await html2canvas(target, {
+      scale: 2,
+      backgroundColor: "#0b1520",
+      useCORS: true,
+      logging: false,
+      imageTimeout: 15000,
+      removeContainer: true
+    });
+  } catch (err) {
+    console.warn("html2canvas 首次失败，尝试回退方案:", err);
+    try {
+      canvas = await html2canvas(target, {
+        scale: 2,
+        backgroundColor: "#0b1520",
+        useCORS: false,
+        allowTaint: true,
+        logging: false,
+        imageTimeout: 15000
+      });
+    } catch (err2) {
+      exportMode = false;
+      document.body.classList.remove('exporting');
+      applySize();
+      render();
+      throw new Error("html2canvas 无法渲染：请确认 background.jpg 与 HTML 在同一目录，或用本地服务器打开");
+    }
+  }
+
   exportMode = false;
   document.body.classList.remove('exporting');
   applySize();
   render();
+
   return canvas;
 }
 
 async function exp() {
-  const c = await captureImage();
-  const a = document.createElement("a");
-  a.download = `NWP_${S.name}_${$("#lead").value}h_${$("#size").value}.png`;
-  a.href = c.toDataURL("image/png", 0.95);
-  a.click();
-  $("#status").textContent = "PNG 已导出(高清) · " + $("#size").value;
+  try {
+    const c = await captureImage();
+    let dataUrl;
+    try {
+      dataUrl = c.toDataURL("image/png", 0.95);
+    } catch (err) {
+      throw new Error("画布被污染，无法导出。请把 HTML 和 background.jpg 放在同一目录，或用本地服务器（如 python -m http.server）打开页面");
+    }
+    const a = document.createElement("a");
+    a.download = `NWP_${S.name}_${$("#lead").value}h_${$("#size").value}.png`;
+    a.href = dataUrl;
+    a.click();
+    $("#status").textContent = "PNG 已导出(高清) · " + $("#size").value;
+  } catch (err) {
+    console.error("导出失败:", err);
+    $("#status").textContent = "导出失败：" + err.message;
+  }
 }
 
 async function copy() {
   try {
     const c = await captureImage();
     c.toBlob(async b => {
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": b })]);
-      $("#status").textContent = "已复制高清图片到剪贴板";
-    });
-  } catch (e) {
-    $("#status").textContent = "浏览器不支持复制，请导出 PNG";
+      if (!b) {
+        $("#status").textContent = "生成图片失败，请改用导出 PNG";
+        return;
+      }
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": b })]);
+        $("#status").textContent = "已复制高清图片到剪贴板";
+      } catch (e) {
+        $("#status").textContent = "浏览器不支持复制，请导出 PNG";
+      }
+    }, "image/png");
+  } catch (err) {
+    console.error("复制失败:", err);
+    $("#status").textContent = "复制失败：" + err.message;
   }
 }
 
