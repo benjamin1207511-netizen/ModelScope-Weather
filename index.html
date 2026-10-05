@@ -33,7 +33,6 @@ button:hover{border-color:#2563eb}
 .preview{overflow:auto;background:#f8fafc}
 .canvaswrap{background:#eef2f7;padding:15px;overflow-x:auto;display:flex;justify-content:center;border-radius:10px}
 
-/* ── 预报图（背景图 + 遮罩 + 内容） ── */
 #out{position:relative;overflow:hidden;background:#0b1520;color:#e8f1f8}
 #bgImage{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
 #bgOverlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,rgba(8,16,26,0.35) 0%,rgba(8,16,26,0.50) 45%,rgba(8,16,26,0.62) 100%);z-index:1;pointer-events:none}
@@ -52,7 +51,6 @@ button:hover{border-color:#2563eb}
 .leg-item{display:flex;align-items:center;gap:4px}
 .leg-swatch{width:14px;height:8px;border-radius:2px}
 
-/* ── 详细查询区 ── */
 .detail{display:grid;grid-template-columns:1.65fr .8fr;gap:18px;margin-top:18px}
 .detail h2,.panel>h2{margin:0 0 14px;font-size:16px;color:#0f172a}
 .chartbox{position:relative;height:390px;background:#ffffff;border-radius:10px;padding:8px}
@@ -60,7 +58,6 @@ button:hover{border-color:#2563eb}
 .mcard{background:#ffffff;border:1px solid #e2e8f0;padding:13px;border-radius:12px}
 .mcard b{display:block;font-size:21px;margin-top:4px;color:#0f172a}
 
-/* ── 注释 ── */
 .notes{margin-top:16px;border-top:1px solid #e2e8f0;padding-top:12px}
 .notes p{margin:0 0 12px;color:#64748b;font-size:12px;line-height:1.6}
 .notes p:last-child{margin-bottom:0}
@@ -242,7 +239,6 @@ const ft = s => new Date(s).toLocaleString("zh-CN", {
   month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
 });
 
-/* ── 背景图加载 ── */
 const bgImg = $("#bgImage");
 const bgReady = new Promise(resolve => {
   if (bgImg.complete && bgImg.naturalWidth > 0) return resolve(true);
@@ -479,17 +475,41 @@ function render() {
   const xAt = i => pad.l + (n <= 1 ? 0 : i * plotW / (n - 1));
   const yAt = (v, min, max) => pad.t + (max - v) * plotH / (max - min || 1);
 
-  /* ✅ 修正：降水柱高度直接映射到 plotH，与坐标轴完全一致 */
+  /* 通用读数标签绘制 */
+  function labelAt(x, y, text, color, dy) {
+    ctx.save();
+    ctx.font = "bold 22px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = "rgba(8,16,26,0.9)";
+    ctx.strokeText(text, x, y + dy);
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y + dy);
+    ctx.restore();
+  }
+
+  /* 降水柱：每 3 小时一根 */
   if (layers.r) {
-    const maxR = Math.max(...series.pr, 1);
-    series.pr.forEach((v, i) => {
-      if (v <= 0) return;
+    const maxR = 50;
+    for (let i = 0; i < n; i += 3) {
+      const v = series.pr[i];
+      if (!v || v <= 0) continue;
       const x = xAt(i);
-      const barH = (v / maxR) * plotH;
+      const barH = Math.min((v / maxR) * plotH, plotH);
       const col = colorFor("r", v, 0, maxR);
       ctx.fillStyle = col.replace("rgb", "rgba").replace(")", ",0.55)");
-      ctx.fillRect(x - 4, pad.t + plotH - barH, 8, barH);
-    });
+      ctx.fillRect(x - 5, pad.t + plotH - barH, 10, barH);
+    }
+    /* 降水柱顶读数（每3小时） */
+    for (let i = 0; i < n; i += 3) {
+      const v = series.pr[i];
+      if (!v || v <= 0) continue;
+      const x = xAt(i);
+      const barH = Math.min((v / maxR) * plotH, plotH);
+      labelAt(x, pad.t + plotH - barH - 16, v.toFixed(1), "#80b8ff", 0);
+    }
   }
 
   if (layers.pp) {
@@ -549,6 +569,11 @@ function render() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
+    /* 气温读数（每3小时，向上） */
+    for (let i = 0; i < n; i += 3) {
+      const x = xAt(i), y = yAt(series.t[i], minT, maxT);
+      labelAt(x, y, series.t[i].toFixed(1), "#ff9d9d", -14);
+    }
   }
 
   if (layers.td) {
@@ -564,6 +589,11 @@ function render() {
     });
     ctx.stroke();
     ctx.setLineDash([]);
+    /* 露点读数（每3小时，向下） */
+    for (let i = 0; i < n; i += 3) {
+      const x = xAt(i), y = yAt(series.td[i], minT, maxT);
+      labelAt(x, y, series.td[i].toFixed(1), "#7cd8ff", 22);
+    }
   }
 
   if (layers.w) {
@@ -576,6 +606,11 @@ function render() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
+    /* 风速读数（每3小时，向上） */
+    for (let i = 0; i < n; i += 3) {
+      const x = xAt(i), y = yAt(series.ws[i], 0, maxW * 1.15);
+      labelAt(x, y, series.ws[i].toFixed(1), "#70e070", -14);
+    }
   }
 
   if (layers.g) {
@@ -590,6 +625,11 @@ function render() {
     });
     ctx.stroke();
     ctx.setLineDash([]);
+    /* 阵风读数（每3小时，向下） */
+    for (let i = 0; i < n; i += 3) {
+      const x = xAt(i), y = yAt(series.wg[i], 0, maxG * 1.15);
+      labelAt(x, y, series.wg[i].toFixed(1), "#ffb060", 22);
+    }
   }
 
   if (layers.p) {
@@ -603,6 +643,11 @@ function render() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
+    /* 气压读数（每3小时，向上） */
+    for (let i = 0; i < n; i += 3) {
+      const x = xAt(i), y = yAt(series.ps[i], minP, maxP);
+      labelAt(x, y, series.ps[i].toFixed(0), "#f0d070", -14);
+    }
   }
 
   if (layers.c) {
@@ -614,6 +659,11 @@ function render() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
+    /* 云量读数（每3小时，向下） */
+    for (let i = 0; i < n; i += 3) {
+      const x = xAt(i), y = yAt(series.cl[i], 0, 100);
+      labelAt(x, y, series.cl[i].toFixed(0), "#b8c8dc", 22);
+    }
   }
 
   if (layers.barb) {
@@ -626,6 +676,7 @@ function render() {
   ctx.fillStyle = "#e0ecf8";
   ctx.font = "30px system-ui";
   ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
   const tStep = Math.max(1, Math.floor(n / 8));
   for (let i = 0; i < n; i += tStep) {
     ctx.fillText(series.time[i], xAt(i), pad.t + plotH + 60);
@@ -648,7 +699,7 @@ function render() {
     td: layers.td ? [Math.floor(Math.min(...series.td)) - 2, Math.ceil(Math.max(...series.td)) + 2] : [0, 30],
     h:  [0, 100],
     w:  layers.w ? [0, Math.ceil(Math.max(...series.ws, 10)) * 1.15] : [0, 30],
-    r:  layers.r ? [0, Math.max(...series.pr, 1)] : [0, 10],
+    r:  [0, 50],
     p:  layers.p ? [Math.floor(Math.min(...series.ps)) - 2, Math.ceil(Math.max(...series.ps)) + 2] : [1000, 1030],
     c:  [0, 100]
   };
@@ -676,6 +727,7 @@ function render() {
     ctx.fillStyle = def.color;
     ctx.font = "bold 30px system-ui";
     ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
     ctx.fillText(def.unit, x, pad.t - 12);
 
     ctx.font = "27px system-ui";
@@ -689,8 +741,7 @@ function render() {
       ctx.lineTo(x + 3, y);
       ctx.stroke();
 
-      /* ✅ 修正：降水坐标轴刻度保留一位小数，避免小值刻度重复 */
-      ctx.fillText(key === 'r' ? val.toFixed(1) : val.toFixed(0), x - 8, y + 9);
+      ctx.fillText(val.toFixed(0), x - 8, y + 9);
     }
   }
 
@@ -792,7 +843,6 @@ function drawDetail() {
   });
 }
 
-/* ── 截图：修复导出问题 ── */
 async function captureImage() {
   await bgReady;
 
@@ -883,7 +933,6 @@ async function copy() {
   }
 }
 
-/* 事件 */
 $$(".model").forEach(b => b.onclick = () => {
   $$(".model").forEach(x => x.classList.remove("active"));
   b.classList.add("active");
@@ -903,7 +952,6 @@ $("#size").onchange = () => { applySize(); render(); };
 $$('input[data-p]').forEach(x => x.onchange = render);
 $$('input[data-var]').forEach(x => x.onchange = drawDetail);
 
-/* 窗口尺寸变化时自适应 */
 let resizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
