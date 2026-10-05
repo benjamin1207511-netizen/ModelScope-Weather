@@ -1,134 +1,822 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ModelScope Weather · 数值模式预报中心</title>
+<title>BAMC NWP Image Studio Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
-:root{--bg:#08111f;--panel:#0e1b2d;--panel2:#12243a;--line:#20354d;--text:#eaf3ff;--muted:#91a6bd;--accent:#4da3ff;--accent2:#7be0c4;--danger:#ff6b7a;--shadow:0 14px 40px #0006}
-*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 15% 0%,#17375a 0,#08111f 38%,#050b14 100%);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
-header{position:sticky;top:0;z-index:5;background:#08111fe8;backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.nav{max-width:1320px;margin:auto;padding:16px 22px;display:flex;align-items:center;gap:18px}.brand{font-size:20px;font-weight:800;letter-spacing:.5px}.brand span{color:var(--accent)}
-.badge{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:99px}
-main{max-width:1320px;margin:auto;padding:28px 22px 60px}.hero h1{margin:0 0 6px;font-size:32px}.hero p{margin:0;color:var(--muted)}
-.toolbar,.panel{background:linear-gradient(145deg,#0f1e31,#0b1727);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
-.toolbar{margin-top:22px;padding:18px;display:grid;gap:14px}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.label{color:var(--muted);min-width:72px}
-button,select,input{background:#0a1625;color:var(--text);border:1px solid #2a425d;border-radius:10px;padding:9px 12px;font:inherit}
-button{cursor:pointer}button:hover{border-color:var(--accent)}button.active{background:#123a62;border-color:var(--accent);box-shadow:0 0 0 2px #4da3ff22}
-input[type=text]{min-width:260px}.primary{background:#1767a9;border-color:#398fd1}.status{color:var(--muted);font-size:13px}
-.checks{display:flex;gap:8px;flex-wrap:wrap}.check{border:1px solid var(--line);padding:7px 10px;border-radius:9px;cursor:pointer}.check input{margin-right:5px;accent-color:var(--accent)}
-.location{margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.place{font-size:22px;font-weight:750}.coords{color:var(--muted);font-size:12px}
-.grid{display:grid;grid-template-columns:1.65fr .8fr;gap:18px;margin-top:18px}.panel{padding:18px}.panel h2{margin:0 0 14px;font-size:16px}.chartbox{height:390px}.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:#0a1625;border:1px solid var(--line);padding:13px;border-radius:12px}.card b{display:block;font-size:21px;margin-top:4px}.muted{color:var(--muted)}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:#a9bdd2}
-.footer{margin-top:20px;color:#71879f;font-size:12px}
-.spinner{display:inline-block;width:12px;height:12px;border:2px solid #ffffff33;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:900px){.grid{grid-template-columns:1fr}.chartbox{height:320px}.hero h1{font-size:26px}}
+*{box-sizing:border-box}
+body{margin:0;background:#07111e;color:#eaf4ff;font:14px system-ui,"Microsoft YaHei",sans-serif}
+header{padding:16px 24px;border-bottom:1px solid #23405a;background:#091522}
+.logo{font-size:21px;font-weight:800}
+.logo b{color:#45a8ff}
+main{max-width:1600px;margin:auto;padding:22px}
+.work{display:grid;grid-template-columns:300px 1fr;gap:18px}
+.panel{background:#0d1b2b;border:1px solid #24405b;border-radius:16px;padding:16px}
+.control{height:max-content;position:sticky;top:10px;max-height:90vh;overflow-y:auto}
+.group{border-bottom:1px solid #21364b;padding-bottom:14px;margin-bottom:14px}
+.group:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+h1{margin:0}
+.muted{color:#8ea5bb;font-size:12px}
+label{display:block;color:#a7b8c8;font-size:12px;margin:6px 0}
+input,select,button{width:100%;background:#081521;color:#eaf4ff;border:1px solid #2a4965;border-radius:8px;padding:9px;margin:4px 0;font:inherit}
+button{cursor:pointer}
+.active,.primary{background:#1264a3;border-color:#4aa8ee}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.checks label{border:1px solid #263f57;border-radius:7px;padding:6px;display:flex;align-items:center;gap:6px}
+.checks input{width:auto;margin:0}
+.preview{overflow:auto}
+.canvaswrap{background:#030910;padding:15px;overflow:auto;display:flex;justify-content:center}
+#out{background:#0b1520;color:#e8f1f8;position:relative;overflow:hidden}
+.out-head{height:72px;padding:14px 28px;background:linear-gradient(135deg,#0a1f35,#0e4a7a);color:#fff;display:flex;justify-content:space-between;align-items:center}
+.out-title{font-size:22px;font-weight:800;letter-spacing:.5px}
+.out-sub{font-size:12px;opacity:.85;margin-top:2px}
+.out-meta{text-align:right;font-size:12px;line-height:1.55}
+.out-body{padding:12px 20px 16px;display:flex;flex-direction:column;gap:10px}
+.layer-bar{display:flex;flex-wrap:wrap;gap:6px}
+.layer-chip{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid transparent}
+.card{background:#111d2b;border:1px solid #1e3348;border-radius:10px;overflow:hidden}
+.card h3{margin:0;padding:8px 12px;background:#152536;border-bottom:1px solid #1e3348;font-size:13px;font-weight:700;color:#9ec4e8}
+.chart-wrap{position:relative;padding:8px}
+#plot{display:block;width:100%;background:#0a121c}
+.foot{font-size:10px;color:#5a7288;margin-top:6px;display:flex;justify-content:space-between;padding:0 4px}
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:4px 0;font-size:10px;color:#8aa0b5}
+.leg-item{display:flex;align-items:center;gap:4px}
+.leg-swatch{width:14px;height:8px;border-radius:2px}
+
+.detail{display:grid;grid-template-columns:1.65fr .8fr;gap:18px;margin-top:18px}
+.detail h2,.panel>h2{margin:0 0 14px;font-size:16px;color:#9ec4e8}
+.chartbox{position:relative;height:390px}
+.mcards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.mcard{background:#0a1625;border:1px solid #20354d;padding:13px;border-radius:12px}
+.mcard b{display:block;font-size:21px;margin-top:4px;color:#eaf4ff}
+.dtbl{width:100%;border-collapse:collapse;font-size:13px}
+.dtbl th,.dtbl td{padding:10px 8px;border-bottom:1px solid #20354d;text-align:left}
+.dtbl th{color:#a9bdd2;background:#152536;font-weight:600}
+.dtbl td{color:#c8d9e8}
+@media(max-width:1100px){.detail{grid-template-columns:1fr}.chartbox{height:320px}}
+@media(max-width:900px){.work{grid-template-columns:1fr}.control{position:static;max-height:none}}
 </style>
 </head>
 <body>
-<header><div class="nav"><div class="brand">Model<span>Scope</span> Weather</div><div class="badge">数值模式预报中心</div><div class="badge">Open-Meteo 数据接口</div></div></header>
+<header>
+  <div class="logo">BAMC <b>NWP Image Studio Pro</b></div>
+</header>
 <main>
-<section class="hero"><h1>模式预报查询</h1><p>参考专业数值模式查询站的交互逻辑，比较 GFS、ECMWF IFS HRES 与 ECMWF AIFS。</p></section>
-
-<section class="toolbar">
-  <div class="row"><span class="label">预报模式</span>
-    <button class="model active" data-model="gfs">GFS Global<br><small>NOAA · ~13 km</small></button>
-    <button class="model" data-model="ifs">ECMWF IFS HRES<br><small>ECMWF · ~9 km</small></button>
-    <button class="model" data-model="aifs">ECMWF AIFS<br><small>AI · ~25 km</small></button>
+  <div class="work">
+    <aside class="panel control">
+      <div class="group">
+        <b>预报模式</b>
+        <button class="model active" data-m="gfs">GFS Global</button>
+        <button class="model" data-m="ifs">ECMWF IFS</button>
+      </div>
+      <div class="group">
+        <b>地点</b>
+        <input id="place" value="北京">
+        <button id="search" class="primary">搜索地点</button>
+        <div id="geo" class="muted">39.904N, 116.407E</div>
+      </div>
+      <div class="group">
+        <b>预报时效</b>
+        <select id="lead">
+          <option>0</option><option>6</option><option>12</option>
+          <option selected>24</option><option>48</option><option>72</option>
+          <option>96</option><option>120</option>
+        </select>
+        <div class="muted">单位：小时（Forecast Hour）</div>
+        <label>预报长度（数据天数）</label>
+        <select id="days">
+          <option value="5">5 天</option>
+          <option value="7" selected>7 天</option>
+          <option value="10">10 天</option>
+          <option value="16">16 天</option>
+        </select>
+      </div>
+      <div class="group">
+        <b>图层（多选叠加）</b>
+        <div class="checks">
+          <label><input type="checkbox" checked data-p="t">气温</label>
+          <label><input type="checkbox" data-p="td">露点</label>
+          <label><input type="checkbox" checked data-p="h">湿度</label>
+          <label><input type="checkbox" checked data-p="w">风速</label>
+          <label><input type="checkbox" data-p="g">阵风</label>
+          <label><input type="checkbox" checked data-p="r">降水</label>
+          <label><input type="checkbox" data-p="pp">降水概率</label>
+          <label><input type="checkbox" data-p="p">气压</label>
+          <label><input type="checkbox" data-p="c">云量</label>
+          <label><input type="checkbox" checked data-p="barb">风羽</label>
+        </div>
+      </div>
+      <div class="group">
+        <b>成图尺寸</b>
+        <select id="size">
+          <option value="1920x1080" selected>1920 × 1080 (Full HD)</option>
+        </select>
+        <button id="refresh">更新数据</button>
+        <button id="export" class="primary">导出 PNG</button>
+        <button id="copy">复制图片</button>
+      </div>
+      <div id="status" class="muted">加载中…</div>
+    </aside>
+    <section class="panel preview">
+      <div class="muted">导出预览（仅导出下方深色预报图区域）</div>
+      <div class="canvaswrap">
+        <div id="out">
+          <div class="out-head">
+            <div>
+              <div class="out-title">NWP 数值预报 · 多要素成图</div>
+              <div id="sub" class="out-sub">GFS Global</div>
+            </div>
+            <div id="meta" class="out-meta"></div>
+          </div>
+          <div class="out-body">
+            <div id="chips" class="layer-bar"></div>
+            <div class="card">
+              <h3>模式预报时序 · 渐变填色 / 风羽 / 六轴坐标</h3>
+              <div class="chart-wrap">
+                <canvas id="plot" width="1600" height="700"></canvas>
+              </div>
+              <div id="legend" class="legend" style="padding:6px 12px 10px"></div>
+            </div>
+            <div class="foot">
+              <span>数据源：Open-Meteo · NOAA GFS / ECMWF IFS</span>
+              <span>BAMC NWP Image Studio Pro · 模式结果仅供参考</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
-  <div class="row"><span class="label">地点</span><input id="place" type="text" value="北京" placeholder="城市 / 区县，例如：深圳、浦东新区"><button id="search" class="primary">搜索</button><button id="default">默认地点</button><span id="locStatus" class="status"></span></div>
-  <div class="row"><span class="label">预报长度</span><select id="days"><option value="5">5 天</option><option value="7" selected>7 天</option><option value="10">10 天</option><option value="16">16 天</option></select>
-    <span class="label">风速单位</span><select id="windUnit"><option value="kmh">km/h</option><option value="ms">m/s</option><option value="kn">kt</option><option value="mph">mph</option></select>
-    <button id="refresh">↻ 刷新</button><span id="status" class="status"></span></div>
-  <div class="row"><span class="label">图表要素</span>
-    <div class="checks">
-      <label class="check"><input type=checkbox data-var=temp checked>🌡 气温</label>
-      <label class="check"><input type=checkbox data-var=humidity checked>💧 湿度</label>
-      <label class="check"><input type=checkbox data-var=precip checked>🌧 降水</label>
-      <label class="check"><input type=checkbox data-var=wind checked>🍃 风速</label>
-      <label class="check"><input type=checkbox data-var=gust>💨 阵风</label>
-      <label class="check"><input type=checkbox data-var=pressure>📊 气压</label>
-      <label class="check"><input type=checkbox data-var=dew>🌡 露点</label>
-      <label class="check"><input type=checkbox data-var=apparent>🥵 体感</label>
-      <label class="check"><input type=checkbox data-var=cloud>☁ 云量</label>
+
+  <section class="detail">
+    <div class="panel">
+      <h2>逐小时模式预报</h2>
+      <div class="chartbox"><canvas id="dchart"></canvas></div>
+      <div class="muted" style="margin-top:8px">勾选下方要素可切换曲线</div>
+      <div class="checks" style="grid-template-columns:repeat(3,1fr);margin-top:8px">
+        <label><input type="checkbox" data-var="temp" checked>气温</label>
+        <label><input type="checkbox" data-var="humidity" checked>湿度</label>
+        <label><input type="checkbox" data-var="precip" checked>降水</label>
+        <label><input type="checkbox" data-var="wind" checked>风速</label>
+        <label><input type="checkbox" data-var="gust">阵风</label>
+        <label><input type="checkbox" data-var="pressure">气压</label>
+        <label><input type="checkbox" data-var="dew">露点</label>
+        <label><input type="checkbox" data-var="apparent">体感</label>
+        <label><input type="checkbox" data-var="cloud">云量</label>
+      </div>
     </div>
-  </div>
-</section>
+    <div class="panel">
+      <h2>当前模式摘要</h2>
+      <div id="cards" class="mcards"></div>
+    </div>
+  </section>
 
-<div class="location"><div><div id="placeName" class="place">北京</div><div id="coords" class="coords">等待数据…</div></div><div id="current" class="status"></div></div>
-
-<section class="grid">
-  <div class="panel"><h2>📈 逐小时模式预报</h2><div class="chartbox"><canvas id="chart"></canvas></div></div>
-  <div class="panel"><h2>📌 当前模式摘要</h2><div id="cards" class="cards"></div></div>
-</section>
-
-<section class="panel" style="margin-top:18px"><h2>📅 逐日预报</h2><div style="overflow:auto"><table><thead><tr><th>日期</th><th>天气</th><th>最高</th><th>最低</th><th>降水</th><th>最大风</th><th>最大阵风</th></tr></thead><tbody id="daily"></tbody></table></div></section>
-
-<section class="panel" style="margin-top:18px"><h2>🧭 模式信息</h2><table><thead><tr><th>模式</th><th>机构</th><th>分辨率</th><th>典型最长时效</th><th>本页面接口</th></tr></thead>
-<tbody><tr><td>GFS Global</td><td>NOAA</td><td>约 13 km</td><td>16 天</td><td>/v1/gfs</td></tr><tr><td>ECMWF IFS HRES</td><td>ECMWF</td><td>约 9 km</td><td>15 天</td><td>/v1/forecast · ECMWF IFS</td></tr><tr><td>ECMWF AIFS</td><td>ECMWF</td><td>约 25 km</td><td>15 天</td><td>/v1/forecast · AIFS</td></tr></tbody></table></section>
-<div class="footer">数据由 Open-Meteo 提供，模型来自各国气象机构。本站仅用于数值模式展示与比较，不代表官方预报或预警。正式使用时请以当地气象部门发布的信息为准。</div>
+  <section class="panel" style="margin-top:18px">
+    <h2>逐日预报</h2>
+    <div style="overflow:auto">
+      <table class="dtbl">
+        <thead><tr><th>日期</th><th>天气</th><th>最高</th><th>最低</th><th>降水</th><th>最大风</th><th>最大阵风</th></tr></thead>
+        <tbody id="daily"></tbody>
+      </table>
+    </div>
+  </section>
 </main>
-<script>
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-let state={model:'gfs',lat:39.9042,lon:116.4074,name:'北京'}, data=null, chart=null;
 
-const modelInfo={
- gfs:{name:'GFS Global',endpoint:'https://api.open-meteo.com/v1/gfs',res:'~13 km'},
- ifs:{name:'ECMWF IFS HRES',endpoint:'https://api.open-meteo.com/v1/forecast',model:'ecmwf_ifs025',res:'~9 km'},
- aifs:{name:'ECMWF AIFS',endpoint:'https://api.open-meteo.com/v1/forecast',model:'ecmwf_aifs025',res:'~25 km'}
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+let S = { m: "gfs", lat: 39.9042, lon: 116.4074, name: "北京" };
+let D = null;
+let chart = null;
+
+const M = {
+  gfs:  ["GFS Global", "NOAA", "~13 km", "https://api.open-meteo.com/v1/gfs", null],
+  ifs:  ["ECMWF IFS", "ECMWF", "~9 km", "https://api.open-meteo.com/v1/forecast", "ecmwf_ifs025"]
 };
 
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function beaufort(kmh){if(kmh<1) return 0;if(kmh<6) return 1;if(kmh<12) return 2;if(kmh<20) return 3;if(kmh<29) return 4;if(kmh<39) return 5;if(kmh<50) return 6;if(kmh<62) return 7;if(kmh<75) return 8;if(kmh<89) return 9;if(kmh<103) return 10;if(kmh<118) return 11;if(kmh<134) return 12;if(kmh<149) return 13;if(kmh<166) return 14;if(kmh<183) return 15;if(kmh<202) return 16;return 17}
-function windLabel(v){const u=$('#windUnit').value;let x=v;if(u==='ms')x=v/3.6;if(u==='kn')x=v/1.852;if(u==='mph')x=v/1.60934;return x.toFixed(1)+' '+({kmh:'km/h',ms:'m/s',kn:'kt',mph:'mph'}[u])}
-function weatherCode(c){const m={0:'晴',1:'大部晴朗',2:'局部多云',3:'阴',45:'雾',48:'雾凇',51:'小毛毛雨',53:'毛毛雨',55:'强毛毛雨',61:'小雨',63:'中雨',65:'大雨',71:'小雪',73:'中雪',75:'大雪',80:'阵雨',81:'中阵雨',82:'强阵雨',95:'雷暴',96:'雷暴+小冰雹',99:'雷暴+大冰雹'};return m[c]??'未知'}
-function fmtDate(s){return new Date(s).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
+const wd = c => ({
+  0:"晴",1:"大部晴朗",2:"局部多云",3:"阴",45:"雾",
+  51:"毛毛雨",61:"小雨",63:"中雨",65:"大雨",
+  71:"小雪",73:"中雪",75:"大雪",
+  80:"阵雨",81:"中阵雨",82:"强阵雨",
+  95:"雷暴",96:"雷暴+冰雹",99:"强雷暴"
+}[c] || "未知");
 
-async function geocode(q){
- const url='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=1&language=zh&format=json';
- const r=await fetch(url);if(!r.ok)throw Error('地点搜索失败');const j=await r.json();if(!j.results?.length)throw Error('没有找到该地点');
- const x=j.results[0];state={...state,lat:x.latitude,lon:x.longitude,name:[x.name,x.admin1,x.country].filter(Boolean).join(' · ')};
+const ft = s => new Date(s).toLocaleString("zh-CN", {
+  month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+});
+
+function lerpColor(a, b, t) {
+  const p = x => parseInt(x.slice(1), 16);
+  const ar = p(a) >> 16, ag = (p(a) >> 8) & 255, ab = p(a) & 255;
+  const br = p(b) >> 16, bg = (p(b) >> 8) & 255, bb = p(b) & 255;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return `rgb(${r},${g},${bl})`;
+}
+function scaleColor(stops, t) {
+  t = Math.max(0, Math.min(1, t));
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [p0, c0] = stops[i], [p1, c1] = stops[i + 1];
+    if (t >= p0 && t <= p1) return lerpColor(c0, c1, (t - p0) / (p1 - p0 || 1));
+  }
+  return stops[stops.length - 1][1];
+}
+const SCALES = {
+  t:  [[0,"#2c0a6e"],[.15,"#1a4db3"],[.3,"#1a9ad6"],[.45,"#3ecf7a"],[.55,"#f0e54a"],[.7,"#f08a2a"],[.85,"#e03a2a"],[1,"#8b0a1a"]],
+  td: [[0,"#1a2a4a"],[.25,"#2a6a9a"],[.5,"#3ab8a0"],[.75,"#e0d060"],[1,"#d06030"]],
+  h:  [[0,"#3a2010"],[.3,"#8a6030"],[.5,"#c0c050"],[.7,"#40a060"],[.9,"#2080c0"],[1,"#1040a0"]],
+  w:  [[0,"#e8f4e8"],[.2,"#a0d0a0"],[.4,"#50b050"],[.6,"#e0c040"],[.8,"#e06020"],[1,"#a02040"]],
+  g:  [[0,"#e8f0f8"],[.25,"#80b0e0"],[.5,"#4080c0"],[.75,"#e08040"],[1,"#c02030"]],
+  r:  [[0,"#ffffff00"],[.1,"#b0e0ff"],[.3,"#40a0e0"],[.5,"#2060c0"],[.7,"#8040c0"],[1,"#c02080"]],
+  pp: [[0,"#ffffff00"],[.2,"#c0e8ff"],[.5,"#60b0e0"],[.8,"#3080c0"],[1,"#1040a0"]],
+  p:  [[0,"#2a1040"],[.3,"#3040a0"],[.5,"#40a080"],[.7,"#e0c040"],[1,"#c04020"]],
+  c:  [[0,"#f0f4f8"],[.3,"#c0d0e0"],[.6,"#8090a8"],[.85,"#405068"],[1,"#182028"]]
+};
+function colorFor(key, val, min, max) {
+  const t = (val - min) / (max - min || 1);
+  return scaleColor(SCALES[key] || SCALES.t, t);
 }
 
-async function load(){
- $('#status').innerHTML='<span class="spinner"></span> 正在获取 '+modelInfo[state.model].name+'…';
- const m=modelInfo[state.model],days=+$('#days').value,wu=$('#windUnit').value;
- const hourly='temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,pressure_msl,dew_point_2m,apparent_temperature,cloud_cover,wind_direction_10m,weather_code';
- const daily='weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max';
- const p=new URLSearchParams({latitude:state.lat,longitude:state.lon,timezone:'auto',forecast_days:days,hourly,daily,wind_speed_unit:wu});
- if(m.model)p.set('models',m.model);
- const r=await fetch(m.endpoint+'?'+p);if(!r.ok)throw Error('模式接口返回错误 '+r.status);data=await r.json();
- $('#status').textContent='更新完成 · '+new Date().toLocaleTimeString('zh-CN');
- render();
+function drawBarb(ctx, x, y, speedKmh, dirDeg, scale = 1) {
+  const knots = speedKmh * 0.539957;
+  const len = 18 * scale * 2;
+  const rad = (dirDeg - 90) * Math.PI / 180;
+  const dx = Math.cos(rad) * len;
+  const dy = Math.sin(rad) * len;
+  ctx.save();
+  ctx.strokeStyle = "#e8f0ff";
+  ctx.fillStyle = "#e8f0ff";
+  ctx.lineWidth = 1.4 * scale * 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + dx, y + dy);
+  ctx.stroke();
+
+  let remaining = knots;
+  let pos = 1.0;
+  const spacing = 0.18;
+  const barbLen = 8 * scale * 2;
+  const side = 1;
+
+  while (remaining >= 50) {
+    const px = x + dx * pos, py = y + dy * pos;
+    const bx = Math.cos(rad + Math.PI / 2 * side) * barbLen * 1.2;
+    const by = Math.sin(rad + Math.PI / 2 * side) * barbLen * 1.2;
+    const px2 = x + dx * (pos - 0.12), py2 = y + dy * (pos - 0.12);
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + bx, py + by);
+    ctx.lineTo(px2, py2);
+    ctx.closePath();
+    ctx.fill();
+    remaining -= 50;
+    pos -= 0.2;
+  }
+  while (remaining >= 10) {
+    const px = x + dx * pos, py = y + dy * pos;
+    const bx = Math.cos(rad + Math.PI / 2 * side) * barbLen;
+    const by = Math.sin(rad + Math.PI / 2 * side) * barbLen;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + bx, py + by);
+    ctx.stroke();
+    remaining -= 10;
+    pos -= spacing;
+  }
+  if (remaining >= 5) {
+    const px = x + dx * pos, py = y + dy * pos;
+    const bx = Math.cos(rad + Math.PI / 2 * side) * barbLen * 0.55;
+    const by = Math.sin(rad + Math.PI / 2 * side) * barbLen * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + bx, py + by);
+    ctx.stroke();
+  }
+  if (knots < 2) {
+    ctx.beginPath();
+    ctx.arc(x, y, 3 * scale * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
-function render(){
- $('#placeName').textContent=state.name;$('#coords').textContent=`${state.lat.toFixed(3)}°N, ${state.lon.toFixed(3)}°E · ${data.timezone}`;
- const h=data.hourly, i=0;
- $('#current').textContent=`当前：${h.temperature_2m[i].toFixed(1)}°C · ${h.relative_humidity_2m[i]}% · ${weatherCode(h.weather_code[i])} · 风 ${windLabel(h.wind_speed_10m[i])}`;
- const cards=[
- ['🌡 气温',h.temperature_2m[0].toFixed(1)+' °C'],['💧 湿度',h.relative_humidity_2m[0]+' %'],
- ['🍃 风速',windLabel(h.wind_speed_10m[0])],['💨 阵风',windLabel(h.wind_gusts_10m[0])],
- ['📊 海平面气压',h.pressure_msl[0].toFixed(0)+' hPa'],['☁ 云量',h.cloud_cover[0]+' %'],
- ['🌡 露点',h.dew_point_2m[0].toFixed(1)+' °C'],['🥵 体感',h.apparent_temperature[0].toFixed(1)+' °C']
- ];
- $('#cards').innerHTML=cards.map(x=>`<div class="card"><span class="muted">${x[0]}</span><b>${x[1]}</b></div>`).join('');
- const d=data.daily;$('#daily').innerHTML=d.time.map((t,i)=>`<tr><td>${t}</td><td>${weatherCode(d.weather_code[i])}</td><td>${d.temperature_2m_max[i].toFixed(1)}°C</td><td>${d.temperature_2m_min[i].toFixed(1)}°C</td><td>${d.precipitation_sum[i].toFixed(1)} mm</td><td>${windLabel(d.wind_speed_10m_max[i])}</td><td>${windLabel(d.wind_gusts_10m_max[i])}</td></tr>`).join('');
- draw();
+
+async function geo() {
+  const q = $("#place").value.trim();
+  const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=1&language=zh&format=json");
+  const j = await r.json();
+  if (!j.results?.length) throw Error("找不到地点");
+  const x = j.results[0];
+  S = { ...S, lat: x.latitude, lon: x.longitude, name: x.name };
+  $("#geo").textContent = `${S.name} · ${S.lat.toFixed(3)}N, ${S.lon.toFixed(3)}E`;
 }
-function draw(){
- const h=data.hourly, labels=h.time.map(fmtDate), selected=$$('input[data-var]:checked').map(x=>x.dataset.var);
- const sets=[];
- const add=(key,label,arr,yAxis='y',dash=[])=>{if(selected.includes(key))sets.push({label,data:arr,borderWidth:2,pointRadius:0,tension:.25,yAxisID:yAxis,borderDash:dash})};
- add('temp','气温 °C',h.temperature_2m);add('dew','露点 °C',h.dew_point_2m);add('apparent','体感 °C',h.apparent_temperature);
- add('humidity','湿度 %',h.relative_humidity_2m,'y2');add('precip','降水 mm',h.precipitation,'y2');add('wind','风速 '+$('#windUnit').value,h.wind_speed_10m,'y2');add('gust','阵风 '+$('#windUnit').value,h.wind_gusts_10m,'y2');add('pressure','气压 hPa',h.pressure_msl,'y2');add('cloud','云量 %',h.cloud_cover,'y2');
- if(chart)chart.destroy();chart=new Chart($('#chart'),{type:'line',data:{labels,datasets:sets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#cfe0f3'}},tooltip:{callbacks:{title:i=>labels[i[0].dataIndex]}}},scales:{x:{ticks:{color:'#7f94aa',maxTicksLimit:12},grid:{color:'#20354d'}},y:{ticks:{color:'#9fc7eb'},grid:{color:'#20354d'},title:{display:true,text:'温度 / °C',color:'#9fc7eb'}},y2:{position:'right',ticks:{color:'#9fd7c8'},grid:{drawOnChartArea:false},title:{display:true,text:'其他变量',color:'#9fd7c8'}}}}});
+
+async function load() {
+  const m = M[S.m];
+  const days = +$("#days").value;
+  const hourly = [
+    "temperature_2m", "dew_point_2m", "relative_humidity_2m", "apparent_temperature",
+    "precipitation", "precipitation_probability",
+    "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m",
+    "pressure_msl", "cloud_cover", "weather_code"
+  ].join(",");
+  const daily = [
+    "weather_code", "temperature_2m_max", "temperature_2m_min",
+    "precipitation_sum", "wind_speed_10m_max", "wind_gusts_10m_max"
+  ].join(",");
+
+  const p = new URLSearchParams({
+    latitude: S.lat, longitude: S.lon,
+    timezone: "auto", forecast_days: days,
+    hourly, daily
+  });
+  if (m[4]) p.set("models", m[4]);
+
+  $("#status").textContent = "正在获取模式数据…";
+  const r = await fetch(m[3] + "?" + p);
+  if (!r.ok) throw Error("接口错误 " + r.status);
+  D = await r.json();
+
+  $("#sub").textContent = m[0];
+  $("#meta").innerHTML = `${S.name}<br>${S.lat.toFixed(3)}°N, ${S.lon.toFixed(3)}°E<br>预报时效 ${$("#lead").value} h`;
+
+  applySize();
+  render();
+  renderDetail();
+  $("#status").textContent = "更新完成 · " + new Date().toLocaleTimeString("zh-CN");
 }
-async function search(){try{$('#locStatus').textContent='搜索中…';await geocode($('#place').value.trim());$('#locStatus').textContent='已定位';await load()}catch(e){$('#locStatus').textContent=e.message}}
-$$('.model').forEach(b=>b.onclick=()=>{$$('.model').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.model=b.dataset.model;load().catch(e=>$('#status').textContent=e.message)});
-$('#search').onclick=search;$('#place').onkeydown=e=>{if(e.key==='Enter')search()};$('#refresh').onclick=()=>load();$('#default').onclick=()=>{state={...state,lat:39.9042,lon:116.4074,name:'北京'};$('#place').value='北京';load()};$('#windUnit').onchange=()=>load();$('#days').onchange=()=>load();$$('input[data-var]').forEach(x=>x.onchange=draw);
-load().catch(e=>$('#status').textContent=e.message);
+
+function applySize() {
+  const [w, h] = $("#size").value.split("x").map(Number);
+  const out = $("#out");
+  out.style.width = w + "px";
+  out.style.minHeight = "";
+  const plot = $("#plot");
+  const chartH = Math.round(h * 0.85);
+  const chartW = Math.round(chartH * (1600 / 700));
+  plot.width = chartW;
+  plot.height = chartH;
+}
+
+function render() {
+  if (!D) return;
+  const c = $("#plot");
+  const ctx = c.getContext("2d");
+  const h = D.hourly;
+  const s = +$("#lead").value;
+  const start = Math.max(0, s - 6);
+  const end = Math.min(h.time.length, start + 48);
+  const n = end - start;
+
+  const layers = {
+    t:  $$('input[data-p=t]:checked').length > 0,
+    td: $$('input[data-p=td]:checked').length > 0,
+    h:  $$('input[data-p=h]:checked').length > 0,
+    w:  $$('input[data-p=w]:checked').length > 0,
+    g:  $$('input[data-p=g]:checked').length > 0,
+    r:  $$('input[data-p=r]:checked').length > 0,
+    pp: $$('input[data-p=pp]:checked').length > 0,
+    p:  $$('input[data-p=p]:checked').length > 0,
+    c:  $$('input[data-p=c]:checked').length > 0,
+    barb: $$('input[data-p=barb]:checked').length > 0
+  };
+
+  const series = { t: [], td: [], hu: [], ws: [], wg: [], pr: [], pp: [], ps: [], cl: [], dir: [], time: [] };
+  for (let i = start; i < end; i++) {
+    series.t.push(h.temperature_2m[i] ?? 0);
+    series.td.push(h.dew_point_2m?.[i] ?? 0);
+    series.hu.push(h.relative_humidity_2m[i] ?? 0);
+    series.ws.push(h.wind_speed_10m[i] ?? 0);
+    series.wg.push(h.wind_gusts_10m?.[i] ?? 0);
+    series.pr.push(h.precipitation[i] ?? 0);
+    series.pp.push(h.precipitation_probability?.[i] ?? 0);
+    series.ps.push(h.pressure_msl[i] ?? 1013);
+    series.cl.push(h.cloud_cover[i] ?? 0);
+    series.dir.push(h.wind_direction_10m[i] ?? 0);
+    series.time.push(ft(h.time[i]).replace(",", " "));
+  }
+
+  const W = c.width, H = c.height;
+
+  const axisWidth   = 24;
+  const axisSpacing = 16 * 2 * 1.5;
+  const slot        = axisWidth + axisSpacing;
+
+  const leftKeys = [];
+  if (layers.t) leftKeys.push('t');
+  if (layers.h) leftKeys.push('h');
+  const rightKeys = ['td', 'w', 'r', 'p', 'c'].filter(k => layers[k]);
+
+  const pad = {
+    l: Math.max(100, 30 + leftKeys.length * slot),
+    r: Math.max(100, 40 + rightKeys.length * slot),
+    t: 44,
+    b: 100
+  };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+
+  ctx.fillStyle = "#0a121c";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = "#1a2a3a";
+  ctx.lineWidth = 1;
+  for (let k = 0; k <= 5; k++) {
+    const y = pad.t + plotH * k / 5;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(pad.l + plotW, y);
+    ctx.stroke();
+  }
+
+  const xAt = i => pad.l + (n <= 1 ? 0 : i * plotW / (n - 1));
+  const yAt = (v, min, max) => pad.t + (max - v) * plotH / (max - min || 1);
+
+  if (layers.r) {
+    const maxR = Math.max(...series.pr, 0.5);
+    series.pr.forEach((v, i) => {
+      if (v <= 0) return;
+      const x = xAt(i);
+      const barH = Math.min(plotH * 0.45, (v / maxR) * plotH * 0.45);
+      const col = colorFor("r", v, 0, maxR);
+      ctx.fillStyle = col.replace("rgb", "rgba").replace(")", ",0.55)");
+      ctx.fillRect(x - 4, pad.t + plotH - barH, 8, barH);
+    });
+  }
+
+  if (layers.pp) {
+    ctx.beginPath();
+    series.pp.forEach((v, i) => {
+      const x = xAt(i), y = yAt(v, 0, 100);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.lineTo(xAt(n - 1), pad.t + plotH);
+    ctx.lineTo(xAt(0), pad.t + plotH);
+    ctx.closePath();
+    const grd = ctx.createLinearGradient(0, pad.t, 0, pad.t + plotH);
+    grd.addColorStop(0, "rgba(96,160,224,0.35)");
+    grd.addColorStop(1, "rgba(96,160,224,0.05)");
+    ctx.fillStyle = grd;
+    ctx.fill();
+  }
+
+  if (layers.h) {
+    for (let i = 0; i < n - 1; i++) {
+      const x0 = xAt(i), x1 = xAt(i + 1);
+      const y0 = yAt(series.hu[i], 0, 100);
+      const y1 = yAt(series.hu[i + 1], 0, 100);
+      const col = colorFor("h", (series.hu[i] + series.hu[i + 1]) / 2, 0, 100);
+      ctx.fillStyle = col.replace("rgb", "rgba").replace(")", ",0.18)");
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.lineTo(x1, pad.t + plotH);
+      ctx.lineTo(x0, pad.t + plotH);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  if (layers.t) {
+    const minT = Math.floor(Math.min(...series.t)) - 2;
+    const maxT = Math.ceil(Math.max(...series.t)) + 2;
+    ctx.beginPath();
+    series.t.forEach((v, i) => {
+      const x = xAt(i), y = yAt(v, minT, maxT);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.lineTo(xAt(n - 1), pad.t + plotH);
+    ctx.lineTo(xAt(0), pad.t + plotH);
+    ctx.closePath();
+    const grd = ctx.createLinearGradient(0, pad.t, 0, pad.t + plotH);
+    grd.addColorStop(0, "rgba(232,90,90,0.30)");
+    grd.addColorStop(1, "rgba(232,90,90,0.02)");
+    ctx.fillStyle = grd;
+    ctx.fill();
+    ctx.strokeStyle = "#e85a5a";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    series.t.forEach((v, i) => {
+      const x = xAt(i), y = yAt(v, minT, maxT);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  if (layers.td) {
+    const minT = Math.floor(Math.min(...series.t, ...series.td)) - 2;
+    const maxT = Math.ceil(Math.max(...series.t, ...series.td)) + 2;
+    ctx.strokeStyle = "#5ab8e0";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    series.td.forEach((v, i) => {
+      const x = xAt(i), y = yAt(v, minT, maxT);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  if (layers.w) {
+    const maxW = Math.max(...series.ws, 10);
+    ctx.strokeStyle = "#50b050";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    series.ws.forEach((v, i) => {
+      const x = xAt(i), y = yAt(v, 0, maxW * 1.15);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  if (layers.g) {
+    const maxG = Math.max(...series.wg, ...series.ws, 10);
+    ctx.strokeStyle = "#e08040";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    series.wg.forEach((v, i) => {
+      const x = xAt(i), y = yAt(v, 0, maxG * 1.15);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  if (layers.p) {
+    const minP = Math.floor(Math.min(...series.ps)) - 2;
+    const maxP = Math.ceil(Math.max(...series.ps)) + 2;
+    ctx.strokeStyle = "#c0a040";
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    series.ps.forEach((v, i) => {
+      const x = xAt(i), y = yAt(v, minP, maxP);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  if (layers.c) {
+    ctx.strokeStyle = "rgba(128,144,168,0.7)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    series.cl.forEach((v, i) => {
+      const x = xAt(i), y = yAt(v, 0, 100);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  if (layers.barb) {
+    const step = Math.max(1, Math.floor(n / 12));
+    for (let i = 0; i < n; i += step) {
+      drawBarb(ctx, xAt(i), pad.t + plotH * 0.12, series.ws[i], series.dir[i], 0.9);
+    }
+  }
+
+  ctx.fillStyle = "#6a8298";
+  ctx.font = "30px system-ui";
+  ctx.textAlign = "center";
+  const tStep = Math.max(1, Math.floor(n / 8));
+  for (let i = 0; i < n; i += tStep) {
+    ctx.fillText(series.time[i], xAt(i), pad.t + plotH + 60);
+  }
+
+  const vi = Math.min(s - start, n - 1);
+  if (vi >= 0) {
+    ctx.strokeStyle = "rgba(255,200,60,0.7)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(xAt(vi), pad.t);
+    ctx.lineTo(xAt(vi), pad.t + plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  const ranges = {
+    t:  layers.t  ? [Math.floor(Math.min(...series.t)) - 2, Math.ceil(Math.max(...series.t)) + 2] : [0, 30],
+    td: layers.td ? [Math.floor(Math.min(...series.td)) - 2, Math.ceil(Math.max(...series.td)) + 2] : [0, 30],
+    h:  [0, 100],
+    w:  layers.w ? [0, Math.ceil(Math.max(...series.ws, 10)) * 1.15] : [0, 30],
+    r:  layers.r ? [0, Math.max(...series.pr, 1)] : [0, 10],
+    p:  layers.p ? [Math.floor(Math.min(...series.ps)) - 2, Math.ceil(Math.max(...series.ps)) + 2] : [1000, 1030],
+    c:  [0, 100]
+  };
+  const axisDefs = {
+    t:  { unit: '°C',   color: '#e85a5a' },
+    td: { unit: '°C',   color: '#5ab8e0' },
+    h:  { unit: '%',    color: '#40a080' },
+    w:  { unit: 'km/h', color: '#50b050' },
+    r:  { unit: 'mm',   color: '#4080c0' },
+    p:  { unit: 'hPa',  color: '#c0a040' },
+    c:  { unit: '%',    color: '#8090a8' }
+  };
+
+  function drawAxis(x, key) {
+    const def = axisDefs[key];
+    const [minVal, maxVal] = ranges[key];
+
+    ctx.strokeStyle = def.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, pad.t);
+    ctx.lineTo(x, pad.t + plotH);
+    ctx.stroke();
+
+    ctx.fillStyle = def.color;
+    ctx.font = "bold 30px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(def.unit, x, pad.t - 12);
+
+    ctx.font = "27px system-ui";
+    ctx.textAlign = "right";
+    for (let k = 0; k <= 5; k++) {
+      const y = pad.t + plotH * k / 5;
+      const val = maxVal - (maxVal - minVal) * k / 5;
+
+      ctx.beginPath();
+      ctx.moveTo(x - 3, y);
+      ctx.lineTo(x + 3, y);
+      ctx.stroke();
+
+      ctx.fillText(val.toFixed(0), x - 8, y + 9);
+    }
+  }
+
+  let lx = pad.l - 18;
+  leftKeys.forEach(k => { drawAxis(lx, k); lx -= slot; });
+
+  let rx = pad.l + plotW + 8;
+  rightKeys.forEach(k => { drawAxis(rx, k); rx += slot; });
+
+  const leg = [];
+  if (layers.t)  leg.push(["气温", "#e85a5a"]);
+  if (layers.td) leg.push(["露点", "#5ab8e0"]);
+  if (layers.h)  leg.push(["湿度", "#40a080"]);
+  if (layers.w)  leg.push(["风速", "#50b050"]);
+  if (layers.g)  leg.push(["阵风", "#e08040"]);
+  if (layers.r)  leg.push(["降水", "#4080c0"]);
+  if (layers.pp) leg.push(["降水概率", "#60a0e0"]);
+  if (layers.p)  leg.push(["气压", "#c0a040"]);
+  if (layers.c)  leg.push(["云量", "#8090a8"]);
+  if (layers.barb) leg.push(["风羽", "#c0d0e8"]);
+  $("#legend").innerHTML = leg.map(([n, c]) =>
+    `<span class="leg-item"><span class="leg-swatch" style="background:${c}"></span>${n}</span>`
+  ).join("");
+}
+
+function renderDetail() {
+  if (!D) return;
+  const h = D.hourly, d = D.daily;
+
+  const cards = [
+    ["气温", h.temperature_2m[0].toFixed(1) + " °C"],
+    ["湿度", h.relative_humidity_2m[0] + " %"],
+    ["风速", h.wind_speed_10m[0].toFixed(1) + " km/h"],
+    ["阵风", h.wind_gusts_10m[0].toFixed(1) + " km/h"],
+    ["海平面气压", h.pressure_msl[0].toFixed(0) + " hPa"],
+    ["云量", h.cloud_cover[0] + " %"],
+    ["露点", h.dew_point_2m[0].toFixed(1) + " °C"],
+    ["体感", h.apparent_temperature[0].toFixed(1) + " °C"]
+  ];
+  $("#cards").innerHTML = cards.map(([k, v]) =>
+    `<div class="mcard"><span class="muted">${k}</span><b>${v}</b></div>`
+  ).join("");
+
+  if (d) {
+    $("#daily").innerHTML = d.time.map((t, i) => `<tr>
+      <td>${t}</td>
+      <td>${wd(d.weather_code[i])}</td>
+      <td>${d.temperature_2m_max[i].toFixed(1)}°C</td>
+      <td>${d.temperature_2m_min[i].toFixed(1)}°C</td>
+      <td>${d.precipitation_sum[i].toFixed(1)} mm</td>
+      <td>${d.wind_speed_10m_max[i].toFixed(1)} km/h</td>
+      <td>${d.wind_gusts_10m_max[i].toFixed(1)} km/h</td>
+    </tr>`).join("");
+  }
+
+  drawDetail();
+}
+
+function drawDetail() {
+  if (!D) return;
+  const h = D.hourly;
+  const labels = h.time.map(ft);
+  const sel = $$('input[data-var]:checked').map(x => x.dataset.var);
+  const sets = [];
+  const add = (key, label, arr, yAxis = 'y', dash = []) => {
+    if (sel.includes(key)) sets.push({
+      label, data: arr, borderWidth: 2, pointRadius: 0, tension: .25,
+      yAxisID: yAxis, borderDash: dash
+    });
+  };
+  add('temp', '气温 °C', h.temperature_2m);
+  add('dew', '露点 °C', h.dew_point_2m);
+  add('apparent', '体感 °C', h.apparent_temperature);
+  add('humidity', '湿度 %', h.relative_humidity_2m, 'y2');
+  add('precip', '降水 mm', h.precipitation, 'y2');
+  add('wind', '风速 km/h', h.wind_speed_10m, 'y2');
+  add('gust', '阵风 km/h', h.wind_gusts_10m, 'y2');
+  add('pressure', '气压 hPa', h.pressure_msl, 'y2');
+  add('cloud', '云量 %', h.cloud_cover, 'y2');
+
+  if (chart) chart.destroy();
+  chart = new Chart($('#dchart'), {
+    type: 'line',
+    data: { labels, datasets: sets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#cfe0f3', boxWidth: 14, font: { size: 11 } } },
+        tooltip: { callbacks: { title: i => labels[i[0].dataIndex] } }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#7f94aa', maxTicksLimit: 12, font: { size: 10 } },
+          grid: { color: '#20354d' }
+        },
+        y: {
+          ticks: { color: '#9fc7eb', font: { size: 10 } },
+          grid: { color: '#20354d' },
+          title: { display: true, text: '温度 / °C', color: '#9fc7eb', font: { size: 11 } }
+        },
+        y2: {
+          position: 'right',
+          ticks: { color: '#9fd7c8', font: { size: 10 } },
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: '其他变量', color: '#9fd7c8', font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+async function exp() {
+  applySize();
+  render();
+  await new Promise(r => setTimeout(r, 80));
+  const c = await html2canvas($("#out"), {
+    scale: 2,
+    backgroundColor: "#0b1520",
+    useCORS: true,
+    logging: false,
+    allowTaint: true
+  });
+  const a = document.createElement("a");
+  a.download = `BAMC_NWP_${S.name}_${$("#lead").value}h_${$("#size").value}.png`;
+  a.href = c.toDataURL("image/png", 0.95);
+  a.click();
+  $("#status").textContent = "PNG 已导出(高清) · " + $("#size").value;
+}
+
+async function copy() {
+  try {
+    applySize();
+    render();
+    await new Promise(r => setTimeout(r, 80));
+    const c = await html2canvas($("#out"), {
+      scale: 2,
+      backgroundColor: "#0b1520",
+      useCORS: true,
+      allowTaint: true
+    });
+    c.toBlob(async b => {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": b })]);
+      $("#status").textContent = "已复制高清图片到剪贴板";
+    });
+  } catch (e) {
+    $("#status").textContent = "浏览器不支持复制，请导出 PNG";
+  }
+}
+
+$$(".model").forEach(b => b.onclick = () => {
+  $$(".model").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  S.m = b.dataset.m;
+  load().catch(e => $("#status").textContent = e.message);
+});
+$("#search").onclick = () => geo().then(load).catch(e => $("#status").textContent = e.message);
+$("#refresh").onclick = () => load().catch(e => $("#status").textContent = e.message);
+$("#export").onclick = exp;
+$("#copy").onclick = copy;
+$("#lead").onchange = () => {
+  $("#meta").innerHTML = `${S.name}<br>${S.lat.toFixed(3)}°N, ${S.lon.toFixed(3)}°E<br>预报时效 ${$("#lead").value} h`;
+  render();
+};
+$("#days").onchange = () => load().catch(e => $("#status").textContent = e.message);
+$("#size").onchange = () => { applySize(); render(); };
+$$('input[data-p]').forEach(x => x.onchange = render);
+$$('input[data-var]').forEach(x => x.onchange = drawDetail);
+
+load().catch(e => $("#status").textContent = e.message);
 </script>
 </body>
 </html>
