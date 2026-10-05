@@ -475,7 +475,7 @@ function render() {
   const xAt = i => pad.l + (n <= 1 ? 0 : i * plotW / (n - 1));
   const yAt = (v, min, max) => pad.t + (max - v) * plotH / (max - min || 1);
 
-  /* 通用读数标签绘制 */
+  /* 通用读数标签 */
   function labelAt(x, y, text, color, dy) {
     ctx.save();
     ctx.font = "bold 22px system-ui";
@@ -490,25 +490,23 @@ function render() {
     ctx.restore();
   }
 
-  /* 降水柱：每 3 小时一根 */
+  /* 降水柱：每 3 小时一根，高度 = 未来 3 小时累计降水 */
   if (layers.r) {
     const maxR = 50;
     for (let i = 0; i < n; i += 3) {
-      const v = series.pr[i];
-      if (!v || v <= 0) continue;
+      /* 累加未来 3 小时（含当前时刻）的降水量 */
+      let sum = 0;
+      for (let k = 0; k < 3 && i + k < n; k++) {
+        sum += series.pr[i + k] ?? 0;
+      }
+      if (sum <= 0) continue;
       const x = xAt(i);
-      const barH = Math.min((v / maxR) * plotH, plotH);
-      const col = colorFor("r", v, 0, maxR);
+      const barH = Math.min((sum / maxR) * plotH, plotH);
+      const col = colorFor("r", sum, 0, maxR);
       ctx.fillStyle = col.replace("rgb", "rgba").replace(")", ",0.55)");
       ctx.fillRect(x - 5, pad.t + plotH - barH, 10, barH);
-    }
-    /* 降水柱顶读数（每3小时） */
-    for (let i = 0; i < n; i += 3) {
-      const v = series.pr[i];
-      if (!v || v <= 0) continue;
-      const x = xAt(i);
-      const barH = Math.min((v / maxR) * plotH, plotH);
-      labelAt(x, pad.t + plotH - barH - 16, v.toFixed(1), "#80b8ff", 0);
+      /* 柱顶读数 */
+      labelAt(x, pad.t + plotH - barH - 16, sum.toFixed(1), "#80b8ff", 0);
     }
   }
 
@@ -569,7 +567,6 @@ function render() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
-    /* 气温读数（每3小时，向上） */
     for (let i = 0; i < n; i += 3) {
       const x = xAt(i), y = yAt(series.t[i], minT, maxT);
       labelAt(x, y, series.t[i].toFixed(1), "#ff9d9d", -14);
@@ -589,7 +586,6 @@ function render() {
     });
     ctx.stroke();
     ctx.setLineDash([]);
-    /* 露点读数（每3小时，向下） */
     for (let i = 0; i < n; i += 3) {
       const x = xAt(i), y = yAt(series.td[i], minT, maxT);
       labelAt(x, y, series.td[i].toFixed(1), "#7cd8ff", 22);
@@ -606,7 +602,6 @@ function render() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
-    /* 风速读数（每3小时，向上） */
     for (let i = 0; i < n; i += 3) {
       const x = xAt(i), y = yAt(series.ws[i], 0, maxW * 1.15);
       labelAt(x, y, series.ws[i].toFixed(1), "#70e070", -14);
@@ -625,7 +620,6 @@ function render() {
     });
     ctx.stroke();
     ctx.setLineDash([]);
-    /* 阵风读数（每3小时，向下） */
     for (let i = 0; i < n; i += 3) {
       const x = xAt(i), y = yAt(series.wg[i], 0, maxG * 1.15);
       labelAt(x, y, series.wg[i].toFixed(1), "#ffb060", 22);
@@ -643,7 +637,6 @@ function render() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
-    /* 气压读数（每3小时，向上） */
     for (let i = 0; i < n; i += 3) {
       const x = xAt(i), y = yAt(series.ps[i], minP, maxP);
       labelAt(x, y, series.ps[i].toFixed(0), "#f0d070", -14);
@@ -659,7 +652,6 @@ function render() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
-    /* 云量读数（每3小时，向下） */
     for (let i = 0; i < n; i += 3) {
       const x = xAt(i), y = yAt(series.cl[i], 0, 100);
       labelAt(x, y, series.cl[i].toFixed(0), "#b8c8dc", 22);
@@ -708,7 +700,7 @@ function render() {
     td: { unit: '°C',   color: '#7cd8ff' },
     h:  { unit: '%',    color: '#70e0b8' },
     w:  { unit: 'km/h', color: '#70e070' },
-    r:  { unit: 'mm',   color: '#80b8ff' },
+    r:  { unit: 'mm/3h', color: '#80b8ff' },
     p:  { unit: 'hPa',  color: '#f0d070' },
     c:  { unit: '%',    color: '#b8c8dc' }
   };
@@ -757,7 +749,7 @@ function render() {
   if (layers.h)  leg.push(["湿度", "#70e0b8"]);
   if (layers.w)  leg.push(["风速", "#70e070"]);
   if (layers.g)  leg.push(["阵风", "#ffb060"]);
-  if (layers.r)  leg.push(["降水", "#80b8ff"]);
+  if (layers.r)  leg.push(["降水 (mm/3h)", "#80b8ff"]);
   if (layers.pp) leg.push(["降水概率", "#a0ccff"]);
   if (layers.p)  leg.push(["气压", "#f0d070"]);
   if (layers.c)  leg.push(["云量", "#b8c8dc"]);
