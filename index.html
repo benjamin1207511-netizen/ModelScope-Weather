@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ModelScope Weather · 数值模式预报中心</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#08111f;--panel:#0e1b2d;--panel2:#12243a;--line:#20354d;--text:#eaf3ff;--muted:#91a6bd;--accent:#4da3ff;--accent2:#7be0c4;--danger:#ff6b7a;--shadow:0 14px 40px #0006}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 15% 0%,#17375a 0,#08111f 38%,#050b14 100%);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+header{position:sticky;top:0;z-index:5;background:#08111fe8;backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav{max-width:1320px;margin:auto;padding:16px 22px;display:flex;align-items:center;gap:18px}.brand{font-size:20px;font-weight:800;letter-spacing:.5px}.brand span{color:var(--accent)}
+.badge{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:99px}
+main{max-width:1320px;margin:auto;padding:28px 22px 60px}.hero h1{margin:0 0 6px;font-size:32px}.hero p{margin:0;color:var(--muted)}
+.toolbar,.panel{background:linear-gradient(145deg,#0f1e31,#0b1727);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.toolbar{margin-top:22px;padding:18px;display:grid;gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.label{color:var(--muted);min-width:72px}
+button,select,input{background:#0a1625;color:var(--text);border:1px solid #2a425d;border-radius:10px;padding:9px 12px;font:inherit}
+button{cursor:pointer}button:hover{border-color:var(--accent)}button.active{background:#123a62;border-color:var(--accent);box-shadow:0 0 0 2px #4da3ff22}
+input[type=text]{min-width:260px}.primary{background:#1767a9;border-color:#398fd1}.status{color:var(--muted);font-size:13px}
+.checks{display:flex;gap:8px;flex-wrap:wrap}.check{border:1px solid var(--line);padding:7px 10px;border-radius:9px;cursor:pointer}.check input{margin-right:5px;accent-color:var(--accent)}
+.location{margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.place{font-size:22px;font-weight:750}.coords{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:1.65fr .8fr;gap:18px;margin-top:18px}.panel{padding:18px}.panel h2{margin:0 0 14px;font-size:16px}.chartbox{height:390px}.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:#0a1625;border:1px solid var(--line);padding:13px;border-radius:12px}.card b{display:block;font-size:21px;margin-top:4px}.muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:#a9bdd2}
+.footer{margin-top:20px;color:#71879f;font-size:12px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #ffffff33;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.chartbox{height:320px}.hero h1{font-size:26px}}
+</style>
+</head>
+<body>
+<header><div class="nav"><div class="brand">Model<span>Scope</span> Weather</div><div class="badge">数值模式预报中心</div><div class="badge">Open-Meteo 数据接口</div></div></header>
+<main>
+<section class="hero"><h1>模式预报查询</h1><p>参考专业数值模式查询站的交互逻辑，比较 GFS、ECMWF IFS HRES 与 ECMWF AIFS。</p></section>
+
+<section class="toolbar">
+  <div class="row"><span class="label">预报模式</span>
+    <button class="model active" data-model="gfs">GFS Global<br><small>NOAA · ~13 km</small></button>
+    <button class="model" data-model="ifs">ECMWF IFS HRES<br><small>ECMWF · ~9 km</small></button>
+    <button class="model" data-model="aifs">ECMWF AIFS<br><small>AI · ~25 km</small></button>
+  </div>
+  <div class="row"><span class="label">地点</span><input id="place" type="text" value="北京" placeholder="城市 / 区县，例如：深圳、浦东新区"><button id="search" class="primary">搜索</button><button id="default">默认地点</button><span id="locStatus" class="status"></span></div>
+  <div class="row"><span class="label">预报长度</span><select id="days"><option value="5">5 天</option><option value="7" selected>7 天</option><option value="10">10 天</option><option value="16">16 天</option></select>
+    <span class="label">风速单位</span><select id="windUnit"><option value="kmh">km/h</option><option value="ms">m/s</option><option value="kn">kt</option><option value="mph">mph</option></select>
+    <button id="refresh">↻ 刷新</button><span id="status" class="status"></span></div>
+  <div class="row"><span class="label">图表要素</span>
+    <div class="checks">
+      <label class="check"><input type=checkbox data-var=temp checked>🌡 气温</label>
+      <label class="check"><input type=checkbox data-var=humidity checked>💧 湿度</label>
+      <label class="check"><input type=checkbox data-var=precip checked>🌧 降水</label>
+      <label class="check"><input type=checkbox data-var=wind checked>🍃 风速</label>
+      <label class="check"><input type=checkbox data-var=gust>💨 阵风</label>
+      <label class="check"><input type=checkbox data-var=pressure>📊 气压</label>
+      <label class="check"><input type=checkbox data-var=dew>🌡 露点</label>
+      <label class="check"><input type=checkbox data-var=apparent>🥵 体感</label>
+      <label class="check"><input type=checkbox data-var=cloud>☁ 云量</label>
+    </div>
+  </div>
+</section>
+
+<div class="location"><div><div id="placeName" class="place">北京</div><div id="coords" class="coords">等待数据…</div></div><div id="current" class="status"></div></div>
+
+<section class="grid">
+  <div class="panel"><h2>📈 逐小时模式预报</h2><div class="chartbox"><canvas id="chart"></canvas></div></div>
+  <div class="panel"><h2>📌 当前模式摘要</h2><div id="cards" class="cards"></div></div>
+</section>
+
+<section class="panel" style="margin-top:18px"><h2>📅 逐日预报</h2><div style="overflow:auto"><table><thead><tr><th>日期</th><th>天气</th><th>最高</th><th>最低</th><th>降水</th><th>最大风</th><th>最大阵风</th></tr></thead><tbody id="daily"></tbody></table></div></section>
+
+<section class="panel" style="margin-top:18px"><h2>🧭 模式信息</h2><table><thead><tr><th>模式</th><th>机构</th><th>分辨率</th><th>典型最长时效</th><th>本页面接口</th></tr></thead>
+<tbody><tr><td>GFS Global</td><td>NOAA</td><td>约 13 km</td><td>16 天</td><td>/v1/gfs</td></tr><tr><td>ECMWF IFS HRES</td><td>ECMWF</td><td>约 9 km</td><td>15 天</td><td>/v1/forecast · ECMWF IFS</td></tr><tr><td>ECMWF AIFS</td><td>ECMWF</td><td>约 25 km</td><td>15 天</td><td>/v1/forecast · AIFS</td></tr></tbody></table></section>
+<div class="footer">数据由 Open-Meteo 提供，模型来自各国气象机构。本站仅用于数值模式展示与比较，不代表官方预报或预警。正式使用时请以当地气象部门发布的信息为准。</div>
+</main>
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let state={model:'gfs',lat:39.9042,lon:116.4074,name:'北京'}, data=null, chart=null;
+
+const modelInfo={
+ gfs:{name:'GFS Global',endpoint:'https://api.open-meteo.com/v1/gfs',res:'~13 km'},
+ ifs:{name:'ECMWF IFS HRES',endpoint:'https://api.open-meteo.com/v1/forecast',model:'ecmwf_ifs025',res:'~9 km'},
+ aifs:{name:'ECMWF AIFS',endpoint:'https://api.open-meteo.com/v1/forecast',model:'ecmwf_aifs025',res:'~25 km'}
+};
+
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function beaufort(kmh){if(kmh<1) return 0;if(kmh<6) return 1;if(kmh<12) return 2;if(kmh<20) return 3;if(kmh<29) return 4;if(kmh<39) return 5;if(kmh<50) return 6;if(kmh<62) return 7;if(kmh<75) return 8;if(kmh<89) return 9;if(kmh<103) return 10;if(kmh<118) return 11;if(kmh<134) return 12;if(kmh<149) return 13;if(kmh<166) return 14;if(kmh<183) return 15;if(kmh<202) return 16;return 17}
+function windLabel(v){const u=$('#windUnit').value;let x=v;if(u==='ms')x=v/3.6;if(u==='kn')x=v/1.852;if(u==='mph')x=v/1.60934;return x.toFixed(1)+' '+({kmh:'km/h',ms:'m/s',kn:'kt',mph:'mph'}[u])}
+function weatherCode(c){const m={0:'晴',1:'大部晴朗',2:'局部多云',3:'阴',45:'雾',48:'雾凇',51:'小毛毛雨',53:'毛毛雨',55:'强毛毛雨',61:'小雨',63:'中雨',65:'大雨',71:'小雪',73:'中雪',75:'大雪',80:'阵雨',81:'中阵雨',82:'强阵雨',95:'雷暴',96:'雷暴+小冰雹',99:'雷暴+大冰雹'};return m[c]??'未知'}
+function fmtDate(s){return new Date(s).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
+
+async function geocode(q){
+ const url='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=1&language=zh&format=json';
+ const r=await fetch(url);if(!r.ok)throw Error('地点搜索失败');const j=await r.json();if(!j.results?.length)throw Error('没有找到该地点');
+ const x=j.results[0];state={...state,lat:x.latitude,lon:x.longitude,name:[x.name,x.admin1,x.country].filter(Boolean).join(' · ')};
+}
+
+async function load(){
+ $('#status').innerHTML='<span class="spinner"></span> 正在获取 '+modelInfo[state.model].name+'…';
+ const m=modelInfo[state.model],days=+$('#days').value,wu=$('#windUnit').value;
+ const hourly='temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,pressure_msl,dew_point_2m,apparent_temperature,cloud_cover,wind_direction_10m,weather_code';
+ const daily='weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max';
+ const p=new URLSearchParams({latitude:state.lat,longitude:state.lon,timezone:'auto',forecast_days:days,hourly,daily,wind_speed_unit:wu});
+ if(m.model)p.set('models',m.model);
+ const r=await fetch(m.endpoint+'?'+p);if(!r.ok)throw Error('模式接口返回错误 '+r.status);data=await r.json();
+ $('#status').textContent='更新完成 · '+new Date().toLocaleTimeString('zh-CN');
+ render();
+}
+function render(){
+ $('#placeName').textContent=state.name;$('#coords').textContent=`${state.lat.toFixed(3)}°N, ${state.lon.toFixed(3)}°E · ${data.timezone}`;
+ const h=data.hourly, i=0;
+ $('#current').textContent=`当前：${h.temperature_2m[i].toFixed(1)}°C · ${h.relative_humidity_2m[i]}% · ${weatherCode(h.weather_code[i])} · 风 ${windLabel(h.wind_speed_10m[i])}`;
+ const cards=[
+ ['🌡 气温',h.temperature_2m[0].toFixed(1)+' °C'],['💧 湿度',h.relative_humidity_2m[0]+' %'],
+ ['🍃 风速',windLabel(h.wind_speed_10m[0])],['💨 阵风',windLabel(h.wind_gusts_10m[0])],
+ ['📊 海平面气压',h.pressure_msl[0].toFixed(0)+' hPa'],['☁ 云量',h.cloud_cover[0]+' %'],
+ ['🌡 露点',h.dew_point_2m[0].toFixed(1)+' °C'],['🥵 体感',h.apparent_temperature[0].toFixed(1)+' °C']
+ ];
+ $('#cards').innerHTML=cards.map(x=>`<div class="card"><span class="muted">${x[0]}</span><b>${x[1]}</b></div>`).join('');
+ const d=data.daily;$('#daily').innerHTML=d.time.map((t,i)=>`<tr><td>${t}</td><td>${weatherCode(d.weather_code[i])}</td><td>${d.temperature_2m_max[i].toFixed(1)}°C</td><td>${d.temperature_2m_min[i].toFixed(1)}°C</td><td>${d.precipitation_sum[i].toFixed(1)} mm</td><td>${windLabel(d.wind_speed_10m_max[i])}</td><td>${windLabel(d.wind_gusts_10m_max[i])}</td></tr>`).join('');
+ draw();
+}
+function draw(){
+ const h=data.hourly, labels=h.time.map(fmtDate), selected=$$('input[data-var]:checked').map(x=>x.dataset.var);
+ const sets=[];
+ const add=(key,label,arr,yAxis='y',dash=[])=>{if(selected.includes(key))sets.push({label,data:arr,borderWidth:2,pointRadius:0,tension:.25,yAxisID:yAxis,borderDash:dash})};
+ add('temp','气温 °C',h.temperature_2m);add('dew','露点 °C',h.dew_point_2m);add('apparent','体感 °C',h.apparent_temperature);
+ add('humidity','湿度 %',h.relative_humidity_2m,'y2');add('precip','降水 mm',h.precipitation,'y2');add('wind','风速 '+$('#windUnit').value,h.wind_speed_10m,'y2');add('gust','阵风 '+$('#windUnit').value,h.wind_gusts_10m,'y2');add('pressure','气压 hPa',h.pressure_msl,'y2');add('cloud','云量 %',h.cloud_cover,'y2');
+ if(chart)chart.destroy();chart=new Chart($('#chart'),{type:'line',data:{labels,datasets:sets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#cfe0f3'}},tooltip:{callbacks:{title:i=>labels[i[0].dataIndex]}}},scales:{x:{ticks:{color:'#7f94aa',maxTicksLimit:12},grid:{color:'#20354d'}},y:{ticks:{color:'#9fc7eb'},grid:{color:'#20354d'},title:{display:true,text:'温度 / °C',color:'#9fc7eb'}},y2:{position:'right',ticks:{color:'#9fd7c8'},grid:{drawOnChartArea:false},title:{display:true,text:'其他变量',color:'#9fd7c8'}}}}});
+}
+async function search(){try{$('#locStatus').textContent='搜索中…';await geocode($('#place').value.trim());$('#locStatus').textContent='已定位';await load()}catch(e){$('#locStatus').textContent=e.message}}
+$$('.model').forEach(b=>b.onclick=()=>{$$('.model').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.model=b.dataset.model;load().catch(e=>$('#status').textContent=e.message)});
+$('#search').onclick=search;$('#place').onkeydown=e=>{if(e.key==='Enter')search()};$('#refresh').onclick=()=>load();$('#default').onclick=()=>{state={...state,lat:39.9042,lon:116.4074,name:'北京'};$('#place').value='北京';load()};$('#windUnit').onchange=()=>load();$('#days').onchange=()=>load();$$('input[data-var]').forEach(x=>x.onchange=draw);
+load().catch(e=>$('#status').textContent=e.message);
+</script>
+</body>
+</html>
