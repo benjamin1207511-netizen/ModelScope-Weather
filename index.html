@@ -214,8 +214,7 @@ button:hover{border-color:#2563eb}
       <h2>当前模式摘要</h2>
       <div id="cards" class="mcards"></div>
       <div class="notes">
-        <p>1. 预报时间均为 UTC 时间，北京时间请 +8 小时</p>
-        <p>2. 建议使用电脑打开</p>
+        <p>建议使用电脑打开</p>
       </div>
     </div>
   </section>
@@ -475,7 +474,6 @@ function render() {
   const xAt = i => pad.l + (n <= 1 ? 0 : i * plotW / (n - 1));
   const yAt = (v, min, max) => pad.t + (max - v) * plotH / (max - min || 1);
 
-  /* 通用读数标签 */
   function labelAt(x, y, text, color, dy) {
     ctx.save();
     ctx.font = "bold 22px system-ui";
@@ -490,11 +488,9 @@ function render() {
     ctx.restore();
   }
 
-  /* 降水柱：每 3 小时一根，高度 = 未来 3 小时累计降水 */
   if (layers.r) {
     const maxR = 50;
     for (let i = 0; i < n; i += 3) {
-      /* 累加未来 3 小时（含当前时刻）的降水量 */
       let sum = 0;
       for (let k = 0; k < 3 && i + k < n; k++) {
         sum += series.pr[i + k] ?? 0;
@@ -505,7 +501,6 @@ function render() {
       const col = colorFor("r", sum, 0, maxR);
       ctx.fillStyle = col.replace("rgb", "rgba").replace(")", ",0.55)");
       ctx.fillRect(x - 5, pad.t + plotH - barH, 10, barH);
-      /* 柱顶读数 */
       labelAt(x, pad.t + plotH - barH - 16, sum.toFixed(1), "#80b8ff", 0);
     }
   }
@@ -700,7 +695,7 @@ function render() {
     td: { unit: '°C',   color: '#7cd8ff' },
     h:  { unit: '%',    color: '#70e0b8' },
     w:  { unit: 'km/h', color: '#70e070' },
-    r:  { unit: 'mm/3h', color: '#80b8ff' },
+    r:  { unit: 'mm',   color: '#80b8ff' },
     p:  { unit: 'hPa',  color: '#f0d070' },
     c:  { unit: '%',    color: '#b8c8dc' }
   };
@@ -749,7 +744,7 @@ function render() {
   if (layers.h)  leg.push(["湿度", "#70e0b8"]);
   if (layers.w)  leg.push(["风速", "#70e070"]);
   if (layers.g)  leg.push(["阵风", "#ffb060"]);
-  if (layers.r)  leg.push(["降水 (mm/3h)", "#80b8ff"]);
+  if (layers.r)  leg.push(["降水 (mm)", "#80b8ff"]);
   if (layers.pp) leg.push(["降水概率", "#a0ccff"]);
   if (layers.p)  leg.push(["气压", "#f0d070"]);
   if (layers.c)  leg.push(["云量", "#b8c8dc"]);
